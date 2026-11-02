@@ -5091,89 +5091,34 @@ local args = {
 game:GetService("ReplicatedStorage"):WaitForChild("SlotRemotes"):WaitForChild("DeleteSlot"):InvokeServer(unpack(args))
 end
 
--- Small toggle UI
-local Players = game:GetService("Players")
-local CoreGui = game:GetService("CoreGui")
-
-local gui = Instance.new("ScreenGui")
-gui.Name = "SlotLoopToggle"
-gui.ResetOnSpawn = false
-
-local button = Instance.new("TextButton")
-button.Name = "ToggleButton"
-button.Size = UDim2.new(0, 190, 0, 42)
-button.Position = UDim2.new(0, 20, 0, 180)
-button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.TextSize = 16
-button.Font = Enum.Font.GothamBold
-button.Parent = gui
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = button
-
-local function updateButton()
-    local selected = {}
-    for slotNum = 1, 8 do
-        if slots["slot" .. slotNum] then
-            table.insert(selected, tostring(slotNum))
-        end
+-- Script-only toggle: change Enabled in getgenv().SlotConfig before loading.
+local function startSlotLoop()
+    if not loopEnabled or loopThreadRunning then
+        return
     end
 
-    local slotText = #selected > 0 and table.concat(selected, ", ") or "None"
-    button.Text = (loopEnabled and "Loop: ON" or "Loop: OFF") .. " | Slots: " .. slotText
-    button.BackgroundColor3 = loopEnabled
-        and Color3.fromRGB(35, 130, 65)
-        or Color3.fromRGB(130, 45, 45)
-end
-
-local function setLoopEnabled(enabled)
-    loopEnabled = enabled
-    updateButton()
-
-    if loopEnabled and not loopThreadRunning then
-        loopThreadRunning = true
-        task.spawn(function()
-            while loopEnabled do
-                for slotNum = 1, 8 do
-                    if not loopEnabled then
-                        break
-                    end
-
-                    if slots["slot" .. slotNum] then
-                        local ok, err = pcall(processSlot, slotNum)
-                        if not ok then
-                            warn("Slot " .. slotNum .. " failed: " .. tostring(err))
-                        end
-                        task.wait()
-                    end
+    loopThreadRunning = true
+    task.spawn(function()
+        while loopEnabled do
+            for slotNum = 1, 8 do
+                if not loopEnabled then
+                    break
                 end
-                task.wait()
+
+                if slots["slot" .. slotNum] then
+                    local ok, err = pcall(processSlot, slotNum)
+                    if not ok then
+                        warn("Slot " .. slotNum .. " failed: " .. tostring(err))
+                    end
+                    task.wait()
+                end
             end
+            task.wait()
+        end
 
-            loopThreadRunning = false
-        end)
-    end
+        loopThreadRunning = false
+    end)
 end
 
-button.Activated:Connect(function()
-    setLoopEnabled(not loopEnabled)
-end)
-
--- Parent to the executor UI container when available, otherwise CoreGui.
-local parentGui = CoreGui
-if typeof(gethui) == "function" then
-    local ok, hui = pcall(gethui)
-    if ok and hui then
-        parentGui = hui
-    end
-end
-
-gui.Parent = parentGui
-updateButton()
-
--- Honor Enabled from the loader when the script first starts.
-if loopEnabled then
-    setLoopEnabled(true)
-end
+-- Start only when Enabled = true in the loader configuration.
+startSlotLoop()
