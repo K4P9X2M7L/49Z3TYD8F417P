@@ -1,0 +1,5179 @@
+local config = (typeof(getgenv) == "function" and getgenv().SlotConfig) or {}
+local selectedSlots = config.Slots or {}
+
+local slots = {}
+for slotNum = 1, 8 do
+    slots["slot" .. slotNum] = selectedSlots[slotNum] == true
+end
+
+local loopEnabled = config.Enabled == true
+local loopThreadRunning = false
+
+local function processSlot(slotNum)
+local args = {
+	slotNum,
+	{
+		hairColorIndex = 7,
+		stats = {
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0
+		},
+		lastName = "",
+		dominantFoot = "Left",
+		firstName = "",
+		skinToneIndex = 4,
+		faceName = {
+			eyes = 7,
+			eyeColor = 4,
+			mouth = 1,
+			eyebrow = 9,
+			nose = 8
+		},
+		hairName = "Long Ninja",
+		skillPoints = 25,
+		heightValue = 0.27407958434066926
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("SlotRemotes"):WaitForChild("SaveSlot"):InvokeServer(unpack(args))
+
+local args = {
+	slotNum,
+	{
+		matchHistory = {
+			{
+				match = "TeamZvTeamX",
+				goals = 4,
+				assists = 1,
+				score = "6 - 1",
+				rating = 10,
+				result = "WIN",
+				opponent = "Team X"
+			},
+			{
+				match = "TeamZvTeamY",
+				goals = 4,
+				assists = 0,
+				score = "4 - 0",
+				rating = 10,
+				result = "WIN",
+				opponent = "Team Y"
+			},
+			{
+				match = "TeamZvTeamW",
+				goals = 4,
+				assists = 1,
+				score = "6 - 0",
+				rating = 10,
+				result = "WIN",
+				opponent = "Team W"
+			},
+			{
+				match = "TeamZvTeamV",
+				goals = 5,
+				assists = 1,
+				score = "6 - 0",
+				rating = 10,
+				result = "WIN",
+				opponent = "Team V"
+			}
+		},
+		stats = {
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			100,
+			300
+		},
+		rank = 1,
+		personality = "OUTGOING",
+		colorsOwned = {
+			grey = true
+		},
+		rankings = {
+			{
+				name = "Rin Itoshi",
+				npc = "Rin Itoshi"
+			},
+			{
+				name = "Ryusei Shidou",
+				npc = "Ryusei Shidou"
+			},
+			{
+				name = "Eita Otoya",
+				npc = "Eita Otoya"
+			},
+			{
+				name = "Tabito Karasu",
+				npc = "Tabito Karasu"
+			},
+			{
+				name = "Kenyu Yukimiya",
+				npc = "Kenyu Yukimiya"
+			},
+			{
+				name = "Yo Hiori",
+				npc = "Yo Hiori"
+			},
+			{
+				name = "Seishiro Nagi",
+				npc = "Seishiro Nagi"
+			},
+			{
+				name = "Meguru Bachira",
+				npc = "Meguru Bachira"
+			},
+			{
+				name = "Shoei Barou",
+				npc = "Shoei Barou"
+			},
+			{
+				name = "Reo Mikage",
+				npc = "Reo Mikage"
+			},
+			{
+				name = "Hyoma Chigiri",
+				npc = "Hyoma Chigiri"
+			},
+			{
+				name = "Rensuke Kunigami",
+				npc = "Rensuke Kunigami"
+			},
+			{
+				name = "Ikki Niko",
+				npc = "Ikki Niko"
+			},
+			{
+				name = "Kenji Aoyama",
+				npc = "Kenji Aoyama"
+			},
+			{
+				name = "Jin Kiyora",
+				npc = "Jin Kiyora"
+			},
+			{
+				name = "Ren Takahashi",
+				npc = "Ren Takahashi"
+			},
+			{
+				name = "Nijiro Nanase",
+				npc = "Nijiro Nanase"
+			},
+			{
+				isPlayer = true
+			},
+			{
+				name = "Ranze Kurona",
+				npc = "Ranze Kurona"
+			},
+			{
+				name = "Naoki Matsumoto",
+				npc = "Naoki Matsumoto"
+			},
+			{
+				name = "Aoshi Tokimitsu",
+				npc = "Aoshi Tokimitsu"
+			},
+			{
+				name = "Jyubei Aryu",
+				npc = "Jyubei Aryu"
+			},
+			{
+				name = "Kaito Fujimoto",
+				npc = "Kaito Fujimoto"
+			},
+			{
+				name = "Yuto Shimizu",
+				npc = "Yuto Shimizu"
+			},
+			{
+				name = "Shota Hasegawa",
+				npc = "Shota Hasegawa"
+			},
+			{
+				name = "Tanaka Hiroshi",
+				npc = "Tanaka Hiroshi"
+			},
+			{
+				name = "Sora Ishikawa",
+				npc = "Sora Ishikawa"
+			},
+			{
+				name = "Itsuki Sakurai",
+				npc = "Itsuki Sakurai"
+			},
+			{
+				name = "Haruto Mizuno",
+				npc = "Haruto Mizuno"
+			},
+			{
+				name = "Daichi Moriyama",
+				npc = "Daichi Moriyama"
+			},
+			{
+				name = "Riku Nakamura",
+				npc = "Riku Nakamura"
+			},
+			{
+				name = "Akira Kobayashi",
+				npc = "Akira Kobayashi"
+			},
+			{
+				name = "Hazime Nishioka",
+				npc = "Hazime Nishioka"
+			},
+			{
+				name = "Takumi Endo",
+				npc = "Takumi Endo"
+			},
+			{
+				name = "Kota Hayashi",
+				npc = "Kota Hayashi"
+			}
+		},
+		lastName = "Hama",
+		whatIf = {
+			at = 1793166650,
+			compass = "striker"
+		},
+		team = {
+			members = {
+				{
+					name = "Rin Itoshi",
+					npc = "Rin Itoshi"
+				},
+				{
+					name = "Ryusei Shidou",
+					npc = "Ryusei Shidou"
+				},
+				{
+					name = "Seishiro Nagi",
+					npc = "Seishiro Nagi"
+				},
+				{
+					name = "Reo Mikage",
+					npc = "Reo Mikage"
+				},
+				{
+					name = "Ikki Niko",
+					npc = "Ikki Niko"
+				},
+				{
+					name = "Ren Takahashi",
+					npc = "Ren Takahashi"
+				},
+				{
+					name = "Ranze Kurona",
+					npc = "Ranze Kurona"
+				},
+				{
+					name = "Jyubei Aryu",
+					npc = "Jyubei Aryu"
+				},
+				{
+					name = "Shota Hasegawa",
+					npc = "Shota Hasegawa"
+				},
+				{
+					name = "Itsuki Sakurai",
+					npc = "Itsuki Sakurai"
+				},
+				{
+					name = "Riku Nakamura",
+					npc = "Riku Nakamura"
+				},
+				{
+					name = "Takumi Endo",
+					npc = "Takumi Endo"
+				}
+			},
+			name = "TEAM A"
+		},
+		createdAt = 1793157001,
+		career = {
+			trials = {
+				bestGoals = 0,
+				ratingTotal = 0,
+				hatTricks = 0,
+				wins = 0,
+				losses = 0,
+				bestRating = 0,
+				goals = 0,
+				draws = 0,
+				tackles = 0,
+				matches = 0,
+				assists = 0,
+				cleanSheets = 0
+			},
+			third = {
+				bestGoals = 5,
+				ratingTotal = 20,
+				hatTricks = 2,
+				wins = 2,
+				losses = 0,
+				bestRating = 10,
+				goals = 9,
+				draws = 0,
+				tackles = 1,
+				matches = 2,
+				assists = 3,
+				cleanSheets = 2
+			},
+			second = {
+				bestGoals = 3,
+				ratingTotal = 34.4,
+				hatTricks = 1,
+				wins = 3,
+				losses = 1,
+				bestRating = 10,
+				goals = 6,
+				draws = 0,
+				tackles = 1,
+				matches = 4,
+				assists = 4,
+				cleanSheets = 2
+			},
+			u20 = {
+				bestGoals = 5,
+				ratingTotal = 10,
+				hatTricks = 1,
+				wins = 1,
+				losses = 0,
+				bestRating = 10,
+				goals = 5,
+				draws = 0,
+				tackles = 1,
+				matches = 1,
+				assists = 1,
+				cleanSheets = 0
+			},
+			u20pre = {
+				bestGoals = 0,
+				ratingTotal = 0,
+				hatTricks = 0,
+				wins = 0,
+				losses = 0,
+				bestRating = 0,
+				goals = 0,
+				draws = 0,
+				tackles = 0,
+				matches = 0,
+				assists = 0,
+				cleanSheets = 0
+			},
+			u20wc = {
+				bestGoals = 0,
+				ratingTotal = 0,
+				hatTricks = 0,
+				wins = 0,
+				losses = 0,
+				bestRating = 0,
+				goals = 0,
+				draws = 0,
+				tackles = 0,
+				matches = 0,
+				assists = 0,
+				cleanSheets = 0
+			},
+			first = {
+				bestGoals = 450,
+				ratingTotal = 40,
+				hatTricks = 250,
+				wins = 450,
+				losses = 0,
+				bestRating = 10,
+				goals = 450,
+				draws = 0,
+				tackles = 250,
+				matches = 250,
+				assists = 450,
+				cleanSheets = 450
+			},
+			neo = {
+				bestGoals = 3,
+				ratingTotal = 73.05,
+				hatTricks = 5,
+				wins = 8,
+				losses = 0,
+				bestRating = 10,
+				goals = 24,
+				draws = 0,
+				tackles = 46,
+				matches = 8,
+				assists = 0,
+				cleanSheets = 8
+			}
+		},
+		storyStage = 87,
+		worldCupSeen = true,
+		thirdSelection = {
+			matchIndex = 3,
+			teams = {
+				A = {
+					"Rin Itoshi",
+					"Ryusei Shidou",
+					"Seishiro Nagi",
+					"Reo Mikage",
+					"Ikki Niko",
+					"Ren Takahashi",
+					"Ranze Kurona",
+					"Jyubei Aryu",
+					"Shota Hasegawa",
+					"Itsuki Sakurai",
+					"Riku Nakamura",
+					"Takumi Endo",
+					"ASI HAMA"
+				},
+				C = {
+					"Kenyu Yukimiya",
+					"Yo Hiori",
+					"Shoei Barou",
+					"Rensuke Kunigami",
+					"Jin Kiyora",
+					"Aoshi Tokimitsu",
+					"Yuto Shimizu",
+					"Sora Ishikawa",
+					"Daichi Moriyama",
+					"Hazime Nishioka"
+				},
+				B = {
+					"Eita Otoya",
+					"Tabito Karasu",
+					"Meguru Bachira",
+					"Hyoma Chigiri",
+					"Kenji Aoyama",
+					"Nijiro Nanase",
+					"Naoki Matsumoto",
+					"Kaito Fujimoto",
+					"Tanaka Hiroshi",
+					"Haruto Mizuno",
+					"Akira Kobayashi",
+					"Kota Hayashi"
+				}
+			},
+			rankings = {
+				{
+					isEleven = true,
+					formationRole = "ST",
+					name = "Rin Itoshi",
+					position = 1
+				},
+				{
+					isEleven = true,
+					formationRole = "RW",
+					name = "Ryusei Shidou",
+					position = 2
+				},
+				{
+					name = "Eita Otoya",
+					position = 3
+				},
+				{
+					isEleven = true,
+					formationRole = "LB",
+					name = "Tabito Karasu",
+					position = 4
+				},
+				{
+					isEleven = true,
+					formationRole = "CM",
+					name = "Kenyu Yukimiya",
+					position = 5
+				},
+				{
+					name = "Yo Hiori",
+					position = 6
+				},
+				{
+					isEleven = true,
+					formationRole = "GK",
+					name = "Gin Gagamaru",
+					position = 7
+				},
+				{
+					isEleven = true,
+					formationRole = "LW",
+					name = "Meguru Bachira",
+					position = 8
+				},
+				{
+					name = "Seishiro Nagi",
+					position = 9
+				},
+				{
+					name = "Shoei Barou",
+					position = 10
+				},
+				{
+					isPlayer = true,
+					name = "ASI HAMA",
+					position = 11,
+					formationRole = "CAM",
+					isEleven = true
+				},
+				{
+					isEleven = true,
+					formationRole = "CB",
+					name = "Reo Mikage",
+					position = 12
+				},
+				{
+					isEleven = true,
+					formationRole = "CM",
+					name = "Hyoma Chigiri",
+					position = 13
+				},
+				{
+					name = "Kenji Aoyama",
+					position = 14
+				},
+				{
+					name = "Ren Takahashi",
+					position = 15
+				},
+				{
+					name = "Rensuke Kunigami",
+					position = 16
+				},
+				{
+					name = "Nijiro Nanase",
+					position = 17
+				},
+				{
+					name = "Jin Kiyora",
+					position = 18
+				},
+				{
+					isEleven = true,
+					formationRole = "CB",
+					name = "Ikki Niko",
+					position = 19
+				},
+				{
+					name = "Ranze Kurona",
+					position = 20
+				},
+				{
+					name = "Yuto Shimizu",
+					position = 21
+				},
+				{
+					name = "Naoki Matsumoto",
+					position = 22
+				},
+				{
+					name = "Jyubei Aryu",
+					position = 23
+				},
+				{
+					isEleven = true,
+					formationRole = "RB",
+					name = "Aoshi Tokimitsu",
+					position = 24
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamW",
+						phases = {},
+						hairName = "MidLength",
+						overall = 14,
+						faceName = {
+							eyes = 3,
+							eyeColor = 3,
+							mouth = 8,
+							eyebrow = 5,
+							nose = 11
+						},
+						name = "Sora Takahashi",
+						hairColorIndex = 15,
+						skinIndex = 5
+					},
+					name = "Sora Takahashi",
+					position = 25
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamW",
+						phases = {},
+						hairName = "Afro",
+						overall = 10,
+						faceName = {
+							eyes = 9,
+							eyeColor = 10,
+							mouth = 8,
+							eyebrow = 3,
+							nose = 4
+						},
+						name = "Shota Abe",
+						hairColorIndex = 4,
+						skinIndex = 3
+					},
+					name = "Shota Abe",
+					position = 26
+				},
+				{
+					name = "Sora Ishikawa",
+					position = 27
+				},
+				{
+					name = "Tanaka Hiroshi",
+					position = 28
+				},
+				{
+					name = "Kaito Fujimoto",
+					position = 29
+				},
+				{
+					name = "Shota Hasegawa",
+					position = 30
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamX",
+						phases = {},
+						hairName = "Twins",
+						overall = 9,
+						faceName = {
+							eyes = 3,
+							eyeColor = 1,
+							mouth = 6,
+							eyebrow = 2,
+							nose = 9
+						},
+						name = "Tsubasa Watanabe",
+						hairColorIndex = 1,
+						skinIndex = 5
+					},
+					name = "Tsubasa Watanabe",
+					position = 31
+				},
+				{
+					name = "Riku Nakamura",
+					position = 32
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamZ",
+						phases = {},
+						hairName = "Long",
+						overall = 2,
+						faceName = {
+							eyes = 3,
+							eyeColor = 8,
+							mouth = 11,
+							eyebrow = 9,
+							nose = 4
+						},
+						name = "Yuto Yamazaki",
+						hairColorIndex = 6,
+						skinIndex = 4
+					},
+					name = "Yuto Yamazaki",
+					position = 33
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamZ",
+						phases = {},
+						hairName = "Emo",
+						overall = 6,
+						faceName = {
+							eyes = 2,
+							eyeColor = 8,
+							mouth = 3,
+							eyebrow = 10,
+							nose = 8
+						},
+						name = "Jin Ito",
+						hairColorIndex = 5,
+						skinIndex = 2
+					},
+					name = "Jin Ito",
+					position = 34
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamX",
+						phases = {},
+						hairName = "Twins",
+						overall = 11,
+						faceName = {
+							eyes = 8,
+							eyeColor = 4,
+							mouth = 8,
+							eyebrow = 6,
+							nose = 11
+						},
+						name = "Shun Nakamura",
+						hairColorIndex = 15,
+						skinIndex = 5
+					},
+					name = "Shun Nakamura",
+					position = 35
+				},
+				{
+					name = "Itsuki Sakurai",
+					position = 36
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamZ",
+						phases = {},
+						hairName = "Bachira",
+						overall = 9,
+						faceName = {
+							eyes = 2,
+							eyeColor = 13,
+							mouth = 5,
+							eyebrow = 9,
+							nose = 6
+						},
+						name = "Kenta Nakamura",
+						hairColorIndex = 3,
+						skinIndex = 2
+					},
+					name = "Kenta Nakamura",
+					position = 37
+				},
+				{
+					name = "Daichi Moriyama",
+					position = 38
+				},
+				{
+					name = "Akira Kobayashi",
+					position = 39
+				},
+				{
+					name = "Hazime Nishioka",
+					position = 40
+				},
+				{
+					name = "Haruto Mizuno",
+					position = 41
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamY",
+						phases = {},
+						hairName = "Barou",
+						overall = 8,
+						faceName = {
+							eyes = 2,
+							eyeColor = 6,
+							mouth = 2,
+							eyebrow = 7,
+							nose = 9
+						},
+						name = "Takumi Kimura",
+						hairColorIndex = 4,
+						skinIndex = 5
+					},
+					name = "Takumi Kimura",
+					position = 42
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamZ",
+						phases = {},
+						hairName = "Bachira",
+						overall = 6,
+						faceName = {
+							eyes = 8,
+							eyeColor = 9,
+							mouth = 1,
+							eyebrow = 9,
+							nose = 6
+						},
+						name = "Takumi Endo",
+						hairColorIndex = 11,
+						skinIndex = 5
+					},
+					name = "Takumi Endo",
+					position = 43
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamW",
+						phases = {},
+						hairName = "Long",
+						overall = 11,
+						faceName = {
+							eyes = 6,
+							eyeColor = 4,
+							mouth = 4,
+							eyebrow = 7,
+							nose = 4
+						},
+						name = "Eita Ito",
+						hairColorIndex = 13,
+						skinIndex = 1
+					},
+					name = "Eita Ito",
+					position = 44
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamY",
+						phases = {},
+						hairName = "Bachira",
+						overall = 11,
+						faceName = {
+							eyes = 7,
+							eyeColor = 1,
+							mouth = 2,
+							eyebrow = 5,
+							nose = 6
+						},
+						name = "Kota Hayashi",
+						hairColorIndex = 12,
+						skinIndex = 1
+					},
+					name = "Kota Hayashi",
+					position = 45
+				},
+				{
+					filler = {
+						filler = true,
+						clothing = "TeamZ",
+						phases = {},
+						hairName = "Bachira",
+						overall = 1,
+						faceName = {
+							eyes = 6,
+							eyeColor = 9,
+							mouth = 4,
+							eyebrow = 10,
+							nose = 1
+						},
+						name = "Yuki Morita",
+						hairColorIndex = 7,
+						skinIndex = 2
+					},
+					name = "Yuki Morita",
+					position = 46
+				}
+			},
+			complete = true,
+			totalGoals = 9,
+			average = 10,
+			outcome = "starter",
+			totalRating = 20,
+			chosenTeam = "A",
+			opponents = {
+				"B",
+				"C"
+			},
+			totalAssists = 3,
+			results = {
+				{
+					opponent = "B",
+					goals = 4,
+					score = "6-0",
+					team = "A",
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				{
+					opponent = "C",
+					goals = 5,
+					score = "6-0",
+					team = "A",
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				}
+			}
+		},
+		gearOwned = {
+			playerGloves = true
+		},
+		hairColorIndex = "#9a8f9e",
+		history = {
+			{
+				chapter = "THE FINAL HIGH-SCHOOL MATCH",
+				choice = "TAKE THE SHOT YOURSELF",
+				outcome = "The goalkeeper saves it, but you realize you want to decide matches yourself."
+			},
+			{
+				chapter = "THE BLUE LOCK INVITATION",
+				choice = "ACCEPT THE INVITATION IMMEDIATELY",
+				outcome = "You accept on the spot. Days later, you find out that hundreds of Japan's best young strikers received the same letter."
+			},
+			{
+				chapter = "ENTERING BLUE LOCK",
+				choice = "REMAIN SILENT AND KEEP TO YOURSELF",
+				outcome = "Before anything else can happen, the director appears on the screen."
+			},
+			{
+				chapter = "EGO'S SPEECH",
+				choice = "RUN THROUGH THE DOORS IMMEDIATELY",
+				outcome = "You don't hesitate, moving before anyone else does."
+			},
+			{
+				chapter = "THE RANKING ROOM",
+				choice = "IGNORE THE OTHERS AND BEGIN WARMING UP",
+				outcome = "You tune out the noise and focus on your own body, ready before anyone else."
+			},
+			{
+				chapter = "THE TAG PHASE",
+				choice = "TARGET THE STRONGEST PLAYER",
+				outcome = "You pick out the best player in the room and drive the ball into him before he can set his feet."
+			},
+			{
+				chapter = "SURVIVING THE TAG PHASE",
+				choice = "TELL HIM HE SIMPLY WASN'T GOOD ENOUGH",
+				outcome = "You say it flat, no malice in it, just fact. It lands harder than an insult would have."
+			},
+			{
+				chapter = "THE FIRST SELECTION IS REVEALED",
+				choice = "FOCUS ON BECOMING TEAM Z'S TOP GOALSCORER",
+				outcome = "You decide the table doesn't matter if you're the last one standing from this team."
+			},
+			{
+				chapter = "DISCOVERING EVERYONE'S WEAPONS",
+				choice = "ROLLED Skull Trap",
+				outcome = "You've discovered your weapon. Whatever it is, it's yours to sharpen from here on."
+			},
+			{
+				chapter = "TEAM Z VS TEAM X",
+				choice = "WIN 6 - 1",
+				outcome = "4 goals, 1 assists, rated 10.0"
+			},
+			{
+				chapter = "A WIN OVER TEAM X",
+				choice = "CLAIM THE WIN AS YOURS",
+				outcome = "You make sure everyone remembers whose goals and assists put Team X away. It doesn't win you friends, but it isn't meant to."
+			},
+			{
+				chapter = "TEAM Z VS TEAM Y",
+				choice = "WIN 4 - 0",
+				outcome = "4 goals, 0 assists, rated 10.0"
+			},
+			{
+				chapter = "A WIN OVER TEAM Y",
+				choice = "REMIND HIM WHAT HE SAID BEFORE KICKOFF",
+				outcome = "You make sure he remembers exactly who he called mediocre. It feels better than it should."
+			},
+			{
+				chapter = "TEAM Z VS TEAM W",
+				choice = "WIN 6 - 0",
+				outcome = "4 goals, 1 assists, rated 10.0"
+			},
+			{
+				chapter = "A WIN OVER TEAM W",
+				choice = "DECIDE YOU NEED TO BE FASTER TOO",
+				outcome = "Watching Chigiri find another gear does something to you. You weren't going to let a teammate outpace you for long anyway."
+			},
+			{
+				chapter = "BEFORE TEAM Z VS TEAM V",
+				choice = "CHALLENGE NAGI DIRECTLY",
+				outcome = "You tell him to say that again after the final whistle. Nagi finally looks up from his food. 'Sure,' he shrugs, already bored of you again."
+			},
+			{
+				chapter = "TEAM Z VS TEAM V",
+				choice = "WIN 6 - 0",
+				outcome = "5 goals, 1 assists, rated 10.0"
+			},
+			{
+				chapter = "A WIN OVER TEAM V",
+				choice = "REMIND NAGI WHAT HE SAID AT LUNCH",
+				outcome = "You bring up the 'lose quickly' comment. Nagi doesn't even look embarrassed, just mildly annoyed that you remembered it."
+			},
+			{
+				chapter = "HOME FOR THE BREAK",
+				choice = "TELL HIM WHAT IT ACTUALLY COST",
+				outcome = "You tell him about the eliminations, the locked rooms, the players who never came back. He stops smiling halfway through."
+			},
+			{
+				chapter = "ONE SHOT ON THE RIVERBANK",
+				choice = "HIT IT AS HARD AS YOU CAN",
+				outcome = "The ball is past him before his hands move. It thumps the fence behind the goal and rolls all the way back to your feet."
+			},
+			{
+				chapter = "PHASE TWO",
+				choice = "RANKED #1",
+				outcome = "Blue Lock and Japan U-20 merge under one roof. You enter Phase Two at the top of the rankings."
+			},
+			{
+				chapter = "THE NEO EGOIST LEAGUE",
+				choice = "JOINED FC BARCHA",
+				outcome = "Chose SPAIN."
+			}
+		},
+		bonusWeaponRolls = 0,
+		league = {
+			phase = "First Selection Phase#4",
+			fixtures = {
+				{
+					playerRating = 10,
+					away = "Team X",
+					played = true,
+					home = "Team Z",
+					events = {
+						{
+							team = "Team Z",
+							kind = "goal",
+							name = "Jingo Raichi"
+						},
+						{
+							team = "Team Z",
+							kind = "assist",
+							name = "Gin Gagamaru"
+						}
+					},
+					playerAssists = 1,
+					awayGoals = 1,
+					playerGoals = 4,
+					round = 1,
+					homeGoals = 6
+				},
+				{
+					away = "Team Y",
+					home = "Team W",
+					played = true,
+					awayGoals = 3,
+					round = 1,
+					events = {
+						{
+							team = "Team W",
+							kind = "goal",
+							name = "Keisuke Wanima"
+						},
+						{
+							team = "Team W",
+							kind = "assist",
+							name = "Junichi Wanima"
+						},
+						{
+							team = "Team W",
+							kind = "goal",
+							name = "Junichi Wanima"
+						},
+						{
+							team = "Team Y",
+							kind = "goal",
+							name = "Ikki Niko"
+						},
+						{
+							team = "Team Y",
+							kind = "goal",
+							name = "Ikki Niko"
+						},
+						{
+							team = "Team Y",
+							kind = "goal",
+							name = "Ikki Niko"
+						}
+					},
+					homeGoals = 2
+				},
+				{
+					playerRating = 10,
+					away = "Team Y",
+					played = true,
+					home = "Team Z",
+					events = {},
+					playerAssists = 0,
+					awayGoals = 0,
+					playerGoals = 4,
+					round = 2,
+					homeGoals = 4
+				},
+				{
+					away = "Team X",
+					home = "Team V",
+					played = true,
+					awayGoals = 0,
+					round = 2,
+					events = {
+						{
+							team = "Team V",
+							kind = "goal",
+							name = "Seishiro Nagi"
+						},
+						{
+							team = "Team V",
+							kind = "assist",
+							name = "Zantetsu Tsurugi"
+						},
+						{
+							team = "Team V",
+							kind = "goal",
+							name = "Seishiro Nagi"
+						},
+						{
+							team = "Team V",
+							kind = "goal",
+							name = "Seishiro Nagi"
+						}
+					},
+					homeGoals = 3
+				},
+				{
+					playerRating = 10,
+					away = "Team W",
+					played = true,
+					home = "Team Z",
+					events = {
+						{
+							team = "Team Z",
+							kind = "goal",
+							name = "Rensuke Kunigami"
+						},
+						{
+							team = "Team Z",
+							kind = "goal",
+							name = "Rensuke Kunigami"
+						}
+					},
+					playerAssists = 1,
+					awayGoals = 0,
+					playerGoals = 4,
+					round = 3,
+					homeGoals = 6
+				},
+				{
+					away = "Team Y",
+					home = "Team V",
+					played = true,
+					awayGoals = 0,
+					round = 3,
+					events = {
+						{
+							team = "Team V",
+							kind = "goal",
+							name = "Reo Mikage"
+						}
+					},
+					homeGoals = 1
+				},
+				{
+					playerRating = 10,
+					away = "Team V",
+					played = true,
+					home = "Team Z",
+					events = {
+						{
+							team = "Team Z",
+							kind = "goal",
+							name = "Rensuke Kunigami"
+						}
+					},
+					playerAssists = 1,
+					awayGoals = 0,
+					playerGoals = 5,
+					round = 4,
+					homeGoals = 6
+				},
+				{
+					away = "Team X",
+					home = "Team W",
+					played = true,
+					awayGoals = 3,
+					round = 4,
+					events = {
+						{
+							team = "Team X",
+							kind = "goal",
+							name = "Shoei Barou"
+						},
+						{
+							team = "Team X",
+							kind = "goal",
+							name = "Shoei Barou"
+						},
+						{
+							team = "Team X",
+							kind = "goal",
+							name = "Shoei Barou"
+						}
+					},
+					homeGoals = 0
+				},
+				{
+					away = "Team W",
+					home = "Team V",
+					played = true,
+					awayGoals = 0,
+					round = 5,
+					events = {
+						{
+							team = "Team V",
+							kind = "goal",
+							name = "Seishiro Nagi"
+						}
+					},
+					homeGoals = 1
+				},
+				{
+					away = "Team Y",
+					home = "Team X",
+					played = true,
+					awayGoals = 1,
+					round = 5,
+					events = {
+						{
+							team = "Team Y",
+							kind = "goal",
+							name = "Ikki Niko"
+						}
+					},
+					homeGoals = 0
+				}
+			}
+		},
+		flowAwakened = true,
+		bondScale = 2,
+		neoEgoistClub = "Barcha",
+		dominantFoot = "Right",
+		positionFreeLeft = 1,
+		scoutRollsUsed = 0,
+		gear = {
+			wear = {
+				playerGloves = true,
+				wristband = "both"
+			},
+			colors = {
+				keeperGloves = "white",
+				balaclava = "black",
+				captainArmband = "grey",
+				faceGuard = "black",
+				handWrap = "white",
+				headband = "white",
+				playerGloves = "grey",
+				wristband = "grey"
+			},
+			shirtNumber = 1
+		},
+		position = "Nigga",
+		weapons = {
+			{
+				passive = {
+					name = "DOUBLE TIME",
+					description = "15% more momentum gain during matches.",
+					momentumGain = 0.15
+				},
+				rarity = "World Class",
+				weaponName = "GOD SPRINTER",
+				skills = {
+					{
+						staminaScale = 3,
+						chanceStat = "Speed",
+						successText = "GODSPEED. He wins it and is gone before anyone turns around.",
+						weaponName = "GOD SPRINTER",
+						style = "godspeed",
+						successRate = 75,
+						scenario = "defending",
+						name = "GODSPEED",
+						description = "Launch at the man on the ball, leaving afterimages behind, rip it off him and burst on into the space he left.",
+						rarity = "World Class"
+					},
+					{
+						staminaScale = 3,
+						scenario = "dribbling",
+						successRate = 75,
+						weaponName = "GOD SPRINTER",
+						chanceStat = "Speed",
+						name = "GODSPEED DISTORTION",
+						successText = "GODSPEED DISTORTION. Two defenders tackle the same afterimage.",
+						style = "distortion",
+						rarity = "World Class",
+						description = "An afterimage stays beside the defender while you flash past, and your trail splits around a second defender before snapping back together.",
+						guaranteedFollowUp = true
+					},
+					{
+						staminaScale = 3,
+						rarity = "World Class",
+						successText = "LOKIS EYES. He saw the gap before it existed and put the ball exactly there.",
+						weaponName = "GOD SPRINTER",
+						chanceStats = {
+							"Speed",
+							"Vision"
+						},
+						successRate = 75,
+						name = "LOKIS EYES",
+						scenario = "shooting",
+						description = "The field narrows to the goal and a light marks the opening, then a sharp streak follows the ball straight into it.",
+						style = "loki"
+					}
+				},
+				stats = {
+					{
+						stat = "Speed",
+						amount = 145
+					},
+					{
+						stat = "Dribbling",
+						amount = 85
+					},
+					{
+						stat = "Finishing",
+						amount = 90
+					}
+				},
+				tagline = "By the time you see him, he's already gone."
+			},
+			{
+				passive = {
+					followUpBonus = {
+						passing = 10
+					},
+					description = "+10% success on passing and defending chances, and +10% on follow-up passes.",
+					name = "MASTER PLAN",
+					scenarioBonus = {
+						defending = 10,
+						passing = 10
+					}
+				},
+				rarity = "World Class",
+				weaponName = "THE STRATEGIST",
+				skills = {
+					{
+						description = "The pitch turns into a tactics board. He draws the attacker's route, then sends three teammates to close it. The trap springs and the ball comes back to him.",
+						successText = "TACTICAL READ. The attacker ran exactly where the plan said he would. Straight into the trap.",
+						weaponName = "THE STRATEGIST",
+						chanceStats = {
+							"Positioning",
+							"Vision"
+						},
+						name = "Tactical Read",
+						scenario = "defending",
+						rarity = "World Class",
+						successRate = 74,
+						style = "tacticalread"
+					},
+					{
+						description = "Two runs get drawn on the board. The decoy drags the defenders with him, and the pass goes into the run nobody tracked.",
+						successText = "DECOY PLAN. They followed the wrong arrow. The real one is already through.",
+						weaponName = "THE STRATEGIST",
+						scenario = "passing",
+						style = "decoyplan",
+						rarity = "World Class",
+						finishChance = 60,
+						chanceStats = {
+							"Vision",
+							"Passing",
+							"Composure"
+						},
+						successRate = 70,
+						name = "Decoy Plan"
+					},
+					{
+						description = "Stop the attack, and the counter is already drawn on the board. Three passes through three teammates, and the last one puts him through.",
+						successText = "PERFECT COUNTERPLAY. Every pass was drawn before it happened.",
+						weaponName = "THE STRATEGIST",
+						chanceStats = {
+							"Vision",
+							"Passing",
+							"Defending"
+						},
+						name = "Perfect Counterplay",
+						scenario = "defending",
+						rarity = "World Class",
+						successRate = 66,
+						style = "counterplay"
+					}
+				},
+				stats = {
+					{
+						stat = "Vision",
+						amount = 95
+					},
+					{
+						stat = "Positioning",
+						amount = 90
+					},
+					{
+						stat = "Passing",
+						amount = 80
+					},
+					{
+						stat = "Composure",
+						amount = 70
+					},
+					{
+						stat = "Defending",
+						amount = 65
+					}
+				},
+				tagline = "The match finished in his head ten minutes ago."
+			}
+		},
+		luckyRolls = 0,
+		neoLeague = {
+			pool = {
+				"Akira Kobayashi",
+				"Aoshi Tokimitsu",
+				"Asahi Naruhaya",
+				"Daichi Moriyama",
+				"Eita Ito",
+				"Eita Otoya",
+				"Gin Gagamaru",
+				"Gurimu Igarashi",
+				"Haruto Mizuno",
+				"Hazime Nishioka",
+				"Hyoma Chigiri",
+				"Ikki Niko",
+				"Isamu Honda",
+				"Itsuki Sakurai",
+				"Jin Ito",
+				"Jin Kiyora",
+				"Jingo Raichi",
+				"Jyubei Aryu",
+				"Kaito Fujimoto",
+				"Kenji Aoyama",
+				"Kenta Nakamura",
+				"Kenyu Yukimiya",
+				"Kota Hayashi",
+				"Meguru Bachira",
+				"Minato Tachibana",
+				"Naoki Matsumoto",
+				"Nijiro Nanase",
+				"Oliver Aiku",
+				"Ranze Kurona",
+				"Ren Takahashi",
+				"Rensuke Kunigami",
+				"Reo Mikage",
+				"Riku Nakamura",
+				"Rin Itoshi",
+				"Ryusei Shidou",
+				"Sakuya Hoshino",
+				"Seishiro Nagi",
+				"Shinji Okamoto",
+				"Shoei Barou",
+				"Shota Abe",
+				"Shota Hasegawa",
+				"Shun Nakamura",
+				"Shuto Sendo",
+				"Sora Ishikawa",
+				"Sora Takahashi",
+				"Tabito Karasu",
+				"Takumi Endo",
+				"Takumi Kimura",
+				"Tanaka Hiroshi",
+				"Teppei Neru",
+				"Teru Kitsunezato",
+				"Tetsuya Maekawa",
+				"Toma Shiranui",
+				"Tsubasa Watanabe",
+				"Yo Hiori",
+				"Yuki Morita",
+				"Yuto Shimizu",
+				"Yuto Yamazaki",
+				"Zantetsu Tsurugi"
+			},
+			overalls = {
+				["Sora Takahashi"] = 32,
+				["Yuto Yamazaki"] = 44,
+				["Takumi Endo"] = 42,
+				["Shota Abe"] = 36,
+				["Kota Hayashi"] = 35,
+				["Yuki Morita"] = 31,
+				["Shun Nakamura"] = 41,
+				["Takumi Kimura"] = 29,
+				["Kenta Nakamura"] = 43,
+				["Tsubasa Watanabe"] = 40,
+				["Eita Ito"] = 43,
+				["Jin Ito"] = 30
+			},
+			complete = true,
+			club = "Barcha",
+			playerOverall = 298,
+			round = 11,
+			lastRating = 10,
+			rounds = {
+				{
+					{
+						home = "Barcha",
+						away = "Ubers"
+					},
+					{
+						home = "PXG",
+						away = "Manshine City"
+					}
+				},
+				{
+					{
+						home = "Barcha",
+						away = "Munchen"
+					},
+					{
+						home = "Ubers",
+						away = "PXG"
+					}
+				},
+				{
+					{
+						home = "Manshine City",
+						away = "Munchen"
+					},
+					{
+						home = "PXG",
+						away = "Barcha"
+					}
+				},
+				{
+					{
+						home = "PXG",
+						away = "Munchen"
+					},
+					{
+						home = "Manshine City",
+						away = "Ubers"
+					}
+				},
+				{
+					{
+						home = "Ubers",
+						away = "Munchen"
+					},
+					{
+						home = "Barcha",
+						away = "Manshine City"
+					}
+				},
+				{
+					{
+						home = "Ubers",
+						away = "Barcha"
+					},
+					{
+						home = "Manshine City",
+						away = "PXG"
+					}
+				},
+				{
+					{
+						home = "Munchen",
+						away = "Barcha"
+					},
+					{
+						home = "PXG",
+						away = "Ubers"
+					}
+				},
+				{
+					{
+						home = "Munchen",
+						away = "Manshine City"
+					},
+					{
+						home = "Barcha",
+						away = "PXG"
+					}
+				},
+				{
+					{
+						home = "Munchen",
+						away = "PXG"
+					},
+					{
+						home = "Ubers",
+						away = "Manshine City"
+					}
+				},
+				{
+					{
+						home = "Munchen",
+						away = "Ubers"
+					},
+					{
+						home = "Manshine City",
+						away = "Barcha"
+					}
+				}
+			},
+			looks = {
+				["Sora Takahashi"] = {
+					skinIndex = 5,
+					name = "Sora Takahashi",
+					faceName = {
+						eyes = 3,
+						eyeColor = 3,
+						mouth = 8,
+						eyebrow = 5,
+						nose = 11
+					},
+					hairColorIndex = 15,
+					hairName = "MidLength"
+				},
+				["Yuto Yamazaki"] = {
+					skinIndex = 4,
+					name = "Yuto Yamazaki",
+					faceName = {
+						eyes = 3,
+						eyeColor = 8,
+						mouth = 11,
+						eyebrow = 9,
+						nose = 4
+					},
+					hairColorIndex = 6,
+					hairName = "Long"
+				},
+				["Takumi Endo"] = {
+					skinIndex = 5,
+					name = "Takumi Endo",
+					faceName = {
+						eyes = 8,
+						eyeColor = 9,
+						mouth = 1,
+						eyebrow = 9,
+						nose = 6
+					},
+					hairColorIndex = 11,
+					hairName = "Bachira"
+				},
+				["Shota Abe"] = {
+					skinIndex = 3,
+					name = "Shota Abe",
+					faceName = {
+						eyes = 9,
+						eyeColor = 10,
+						mouth = 8,
+						eyebrow = 3,
+						nose = 4
+					},
+					hairColorIndex = 4,
+					hairName = "Afro"
+				},
+				["Kota Hayashi"] = {
+					skinIndex = 1,
+					name = "Kota Hayashi",
+					faceName = {
+						eyes = 7,
+						eyeColor = 1,
+						mouth = 2,
+						eyebrow = 5,
+						nose = 6
+					},
+					hairColorIndex = 12,
+					hairName = "Bachira"
+				},
+				["Yuki Morita"] = {
+					skinIndex = 2,
+					name = "Yuki Morita",
+					faceName = {
+						eyes = 6,
+						eyeColor = 9,
+						mouth = 4,
+						eyebrow = 10,
+						nose = 1
+					},
+					hairColorIndex = 7,
+					hairName = "Bachira"
+				},
+				["Shun Nakamura"] = {
+					skinIndex = 5,
+					name = "Shun Nakamura",
+					faceName = {
+						eyes = 8,
+						eyeColor = 4,
+						mouth = 8,
+						eyebrow = 6,
+						nose = 11
+					},
+					hairColorIndex = 15,
+					hairName = "Twins"
+				},
+				["Takumi Kimura"] = {
+					skinIndex = 5,
+					name = "Takumi Kimura",
+					faceName = {
+						eyes = 2,
+						eyeColor = 6,
+						mouth = 2,
+						eyebrow = 7,
+						nose = 9
+					},
+					hairColorIndex = 4,
+					hairName = "Barou"
+				},
+				["Kenta Nakamura"] = {
+					skinIndex = 2,
+					name = "Kenta Nakamura",
+					faceName = {
+						eyes = 2,
+						eyeColor = 13,
+						mouth = 5,
+						eyebrow = 9,
+						nose = 6
+					},
+					hairColorIndex = 3,
+					hairName = "Bachira"
+				},
+				["Tsubasa Watanabe"] = {
+					skinIndex = 5,
+					name = "Tsubasa Watanabe",
+					faceName = {
+						eyes = 3,
+						eyeColor = 1,
+						mouth = 6,
+						eyebrow = 2,
+						nose = 9
+					},
+					hairColorIndex = 1,
+					hairName = "Twins"
+				},
+				["Eita Ito"] = {
+					skinIndex = 1,
+					name = "Eita Ito",
+					faceName = {
+						eyes = 6,
+						eyeColor = 4,
+						mouth = 4,
+						eyebrow = 7,
+						nose = 4
+					},
+					hairColorIndex = 13,
+					hairName = "Long"
+				},
+				["Jin Ito"] = {
+					skinIndex = 2,
+					name = "Jin Ito",
+					faceName = {
+						eyes = 2,
+						eyeColor = 8,
+						mouth = 3,
+						eyebrow = 10,
+						nose = 8
+					},
+					hairColorIndex = 5,
+					hairName = "Emo"
+				}
+			},
+			played = {
+				{
+					away = "Manshine City",
+					home = "PXG",
+					hg = 2,
+					round = 1,
+					ag = 3
+				},
+				{
+					away = "Ubers",
+					home = "Barcha",
+					hg = 3,
+					round = 1,
+					ag = 1
+				},
+				{
+					away = "PXG",
+					home = "Ubers",
+					hg = 3,
+					round = 2,
+					ag = 1
+				},
+				{
+					away = "Munchen",
+					home = "Barcha",
+					hg = 3,
+					round = 2,
+					ag = 2
+				},
+				{
+					away = "Munchen",
+					home = "Manshine City",
+					hg = 2,
+					round = 3,
+					ag = 3
+				},
+				{
+					away = "Barcha",
+					home = "PXG",
+					hg = 3,
+					round = 3,
+					ag = 1
+				},
+				{
+					away = "Munchen",
+					home = "PXG",
+					hg = 3,
+					round = 4,
+					ag = 2
+				},
+				{
+					away = "Ubers",
+					home = "Manshine City",
+					hg = 0,
+					round = 4,
+					ag = 3
+				},
+				{
+					away = "Munchen",
+					home = "Ubers",
+					hg = 1,
+					round = 5,
+					ag = 3
+				},
+				{
+					away = "Manshine City",
+					home = "Barcha",
+					hg = 3,
+					round = 5,
+					ag = 0
+				},
+				{
+					away = "PXG",
+					home = "Manshine City",
+					hg = 3,
+					round = 6,
+					ag = 2
+				},
+				{
+					away = "Barcha",
+					home = "Ubers",
+					hg = 1,
+					round = 6,
+					ag = 3
+				},
+				{
+					away = "Ubers",
+					home = "PXG",
+					hg = 3,
+					round = 7,
+					ag = 2
+				},
+				{
+					away = "Barcha",
+					home = "Munchen",
+					hg = 3,
+					round = 7,
+					ag = 2
+				},
+				{
+					away = "Manshine City",
+					home = "Munchen",
+					hg = 3,
+					round = 8,
+					ag = 1
+				},
+				{
+					away = "PXG",
+					home = "Barcha",
+					hg = 3,
+					round = 8,
+					ag = 2
+				},
+				{
+					away = "PXG",
+					home = "Munchen",
+					hg = 2,
+					round = 9,
+					ag = 3
+				},
+				{
+					away = "Manshine City",
+					home = "Ubers",
+					hg = 1,
+					round = 9,
+					ag = 3
+				},
+				{
+					away = "Ubers",
+					home = "Munchen",
+					hg = 3,
+					round = 10,
+					ag = 2
+				},
+				{
+					away = "Barcha",
+					home = "Manshine City",
+					hg = 3,
+					round = 10,
+					ag = 2
+				}
+			},
+			teams = {
+				Munchen = {
+					"Gin Gagamaru",
+					"Meguru Bachira",
+					"Jyubei Aryu",
+					"Naoki Matsumoto",
+					"Ikki Niko",
+					"Rensuke Kunigami",
+					"Shota Hasegawa",
+					"Haruto Mizuno",
+					"Sora Ishikawa",
+					"Akira Kobayashi",
+					"Tsubasa Watanabe",
+					"Jin Ito"
+				},
+				PXG = {
+					"Ryusei Shidou",
+					"Kenji Aoyama",
+					"Ranze Kurona",
+					"Ren Takahashi",
+					"Yo Hiori",
+					"Isamu Honda",
+					"Riku Nakamura",
+					"Asahi Naruhaya",
+					"Itsuki Sakurai",
+					"Eita Ito",
+					"Shota Abe",
+					"Takumi Kimura"
+				},
+				Barcha = {
+					"Tetsuya Maekawa",
+					"Seishiro Nagi",
+					"Teppei Neru",
+					"Toma Shiranui",
+					"Tabito Karasu",
+					"Nijiro Nanase",
+					"Sakuya Hoshino",
+					"Yuto Shimizu",
+					"Gurimu Igarashi",
+					"Takumi Endo",
+					"Sora Takahashi"
+				},
+				["Manshine City"] = {
+					"Rin Itoshi",
+					"Kenyu Yukimiya",
+					"Shoei Barou",
+					"Eita Otoya",
+					"Minato Tachibana",
+					"Tanaka Hiroshi",
+					"Aoshi Tokimitsu",
+					"Kaito Fujimoto",
+					"Zantetsu Tsurugi",
+					"Hazime Nishioka",
+					"Shun Nakamura",
+					"Yuki Morita"
+				},
+				Ubers = {
+					"Oliver Aiku",
+					"Shuto Sendo",
+					"Reo Mikage",
+					"Hyoma Chigiri",
+					"Jingo Raichi",
+					"Jin Kiyora",
+					"Teru Kitsunezato",
+					"Daichi Moriyama",
+					"Shinji Okamoto",
+					"Yuto Yamazaki",
+					"Kenta Nakamura",
+					"Kota Hayashi"
+				}
+			},
+			matchIndex = 8,
+			offers = {
+				["Gurimu Igarashi"] = {
+					value = 64.35035985905924,
+					club = "AC Milanoia",
+					last = 46,
+					offer = 65.5
+				},
+				Remington = {
+					value = 25.433427872720166,
+					club = "Palmaro",
+					last = 0,
+					offer = 24
+				},
+				["Riku Nakamura"] = {
+					value = 36.662397886748806,
+					club = "Ajajax",
+					last = 38.5,
+					offer = 34
+				},
+				["Isamu Honda"] = {
+					value = 118.76851847498625,
+					club = "Manshine United",
+					last = 104,
+					offer = 126.5
+				},
+				["Sakuya Hoshino"] = {
+					value = 95.70132040773323,
+					club = "Chelblue",
+					last = 97,
+					offer = 94.5
+				},
+				["Tabito Karasu"] = {
+					value = 100.18171609974627,
+					club = "Arsenaly",
+					last = 109.5,
+					offer = 112.5
+				},
+				["Gin Gagamaru"] = {
+					value = 38.471163738104465,
+					club = "Manshine United",
+					last = 35,
+					offer = 96.5
+				},
+				["Aoshi Tokimitsu"] = {
+					value = 135.80209153226707,
+					club = "AC Milanoia",
+					last = 111,
+					offer = 154.5
+				},
+				["Jyubei Aryu"] = {
+					value = 99.07872727978032,
+					club = "Munchen",
+					last = 87,
+					offer = 67
+				},
+				["Tetsuya Maekawa"] = {
+					value = 103.44273121858652,
+					club = "Napolin",
+					last = 86,
+					offer = 113.5
+				},
+				["Teppei Neru"] = {
+					value = 86.36530101008013,
+					club = "Vesper Bremen",
+					last = 102,
+					offer = 41.5
+				},
+				["Ranze Kurona"] = {
+					value = 134.92281750221696,
+					club = "Ubers",
+					last = 104.5,
+					offer = 141
+				},
+				["Minato Tachibana"] = {
+					value = 78.38819942710312,
+					club = "Monao",
+					last = 72.5,
+					offer = 86.5
+				},
+				Elio = {
+					value = 17.37739152125648,
+					club = "Chelblue",
+					last = 11.5,
+					offer = 15.5
+				},
+				["Itsuki Sakurai"] = {
+					value = 36.01469783548565,
+					club = "Vesper Bremen",
+					last = 25.5,
+					offer = 36
+				},
+				["Ryusei Shidou"] = {
+					value = 213.06862921816506,
+					club = "Munchen",
+					last = 227,
+					offer = 220
+				},
+				["Daichi Moriyama"] = {
+					value = 48.590308717738054,
+					club = "Monao",
+					last = 47,
+					offer = 49.5
+				},
+				["Rin Itoshi"] = {
+					value = 133.17803822225386,
+					club = "AC Milanoia",
+					last = 96.5,
+					offer = 149
+				},
+				["Ikki Niko"] = {
+					value = 100.51809422769927,
+					club = "Vesper Bremen",
+					last = 98.5,
+					offer = 108
+				},
+				player = {
+					value = 600.7256,
+					club = "Monao",
+					last = 448.5,
+					offer = 663
+				},
+				["Haruto Mizuno"] = {
+					value = 44.432627485836704,
+					club = "Manshine United",
+					last = 43,
+					offer = 50
+				},
+				["Alexis Ness"] = {
+					value = 151.04594421482884,
+					club = "Arsenaly",
+					last = 151.5,
+					offer = 169
+				},
+				["Don Lorenzo"] = {
+					value = 165.90488959457238,
+					club = "Monao",
+					last = 116.5,
+					offer = 186.5
+				},
+				["Teru Kitsunezato"] = {
+					value = 73.80064246760756,
+					club = "Monao",
+					last = 42,
+					offer = 70.5
+				},
+				Rico = {
+					value = 82.69698344681346,
+					club = "Manshine United",
+					last = 53.5,
+					offer = 88
+				},
+				["Asahi Naruhaya"] = {
+					value = 80.83044367809431,
+					club = "Manshine United",
+					last = 62.5,
+					offer = 71.5
+				},
+				["Reo Mikage"] = {
+					value = 59.23920786977929,
+					club = "Chelblue",
+					last = 56.5,
+					offer = 104.5
+				},
+				["Eita Otoya"] = {
+					value = 74.9842604810934,
+					club = "Chelblue",
+					last = 64.5,
+					offer = 68.5
+				},
+				["Oliver Aiku"] = {
+					value = 204.741748262382,
+					club = "Vesper Bremen",
+					last = 185.5,
+					offer = 217.5
+				},
+				["Charles Chevalier"] = {
+					value = 218.40292951602726,
+					club = "Arsenaly",
+					last = 160,
+					offer = 237.5
+				},
+				["Kenyu Yukimiya"] = {
+					value = 129.4620947616142,
+					club = "Ajajax",
+					last = 113.5,
+					offer = 136.5
+				},
+				["Toma Shiranui"] = {
+					value = 88.7805313558523,
+					club = "Chicorid",
+					last = 80.5,
+					offer = 90.5
+				},
+				["Noah Chance"] = {
+					value = 160.49930187043245,
+					club = "Munchen",
+					last = 155,
+					offer = 177
+				},
+				["Naoki Matsumoto"] = {
+					value = 67.94009055441285,
+					club = "Chelblue",
+					last = 48.5,
+					offer = 74
+				},
+				["Akira Kobayashi"] = {
+					value = 3.1120822828304378,
+					club = "Palmaro",
+					last = 0,
+					offer = 3.5
+				},
+				["Jin Kiyora"] = {
+					value = 76.00286889759332,
+					club = "Ubers",
+					last = 62,
+					offer = 85.5
+				},
+				Chapa = {
+					value = 59.16824220080544,
+					club = "Monao",
+					last = 66,
+					offer = 67
+				},
+				["Kaito Fujimoto"] = {
+					value = 79.03522638832251,
+					club = "Monao",
+					last = 66,
+					offer = 73
+				},
+				["Shoei Barou"] = {
+					value = 103.4962761345492,
+					club = "Napolin",
+					last = 95,
+					offer = 103.5
+				},
+				["Rhino Beast"] = {
+					value = 160.31503589708382,
+					club = "Manshine United",
+					last = 157.5,
+					offer = 176.5
+				},
+				["Shota Hasegawa"] = {
+					value = 115.62497059637397,
+					club = "FC Barcha",
+					last = 81.5,
+					offer = 114.5
+				},
+				["Shinji Okamoto"] = {
+					value = 34.71829896707574,
+					club = "FC Barcha",
+					last = 0,
+					offer = 39
+				},
+				["Seishiro Nagi"] = {
+					value = 134.28006346703503,
+					club = "Ubers",
+					last = 122.5,
+					offer = 151.5
+				},
+				["Shuto Sendo"] = {
+					value = 100.24516425755091,
+					club = "Celticoss",
+					last = 98.5,
+					offer = 86.5
+				},
+				["Nijiro Nanase"] = {
+					value = 82.9125965045753,
+					club = "Chelblue",
+					last = 77,
+					offer = 80.5
+				},
+				["Michael Kaiser"] = {
+					value = 594.7521099687536,
+					club = "Chicorid",
+					last = 476.5,
+					offer = 656
+				},
+				["Kenji Aoyama"] = {
+					value = 135.33610159331985,
+					club = "FC Portimion",
+					last = 112.5,
+					offer = 147.5
+				},
+				["Zantetsu Tsurugi"] = {
+					value = 46.29711098319771,
+					club = "Celticoss",
+					last = 14.5,
+					offer = 52
+				},
+				Agi = {
+					value = 132.30210405433394,
+					club = "AC Milanoia",
+					last = 124.5,
+					offer = 127.5
+				},
+				["Yuto Shimizu"] = {
+					value = 163.01111134281436,
+					club = "Interias Milanoia",
+					last = 148.5,
+					offer = 179
+				},
+				["Jingo Raichi"] = {
+					value = 79.63066198757117,
+					club = "Chelblue",
+					last = 76.5,
+					offer = 89.5
+				},
+				["Rensuke Kunigami"] = {
+					value = 117.84707699850154,
+					club = "Chelblue",
+					last = 79,
+					offer = 112.5
+				},
+				["Yo Hiori"] = {
+					value = 106.35947269387079,
+					club = "Vesper Bremen",
+					last = 69,
+					offer = 114.5
+				},
+				["Sora Ishikawa"] = {
+					value = 31.543449769443313,
+					club = "Manshine City",
+					last = 31,
+					offer = 36
+				},
+				["Meguru Bachira"] = {
+					value = 99.59792058138436,
+					club = "Chicorid",
+					last = 96,
+					offer = 110
+				},
+				["Tanaka Hiroshi"] = {
+					value = 67.4400977909009,
+					club = "Manshine City",
+					last = 45.5,
+					offer = 65
+				},
+				["Hyoma Chigiri"] = {
+					value = 102.38317102007181,
+					club = "Vesper Bremen",
+					last = 92,
+					offer = 106
+				},
+				["Ren Takahashi"] = {
+					value = 121.24032878671518,
+					club = "Munchen",
+					last = 109,
+					offer = 123
+				}
+			},
+			finalRank = 1,
+			stage = 8,
+			results = {
+				{
+					theirScore = 1,
+					goals = 1,
+					opponent = "Ubers",
+					ourScore = 3,
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				{
+					theirScore = 2,
+					goals = 1,
+					opponent = "Munchen",
+					ourScore = 3,
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				{
+					theirScore = 3,
+					goals = 1,
+					opponent = "PXG",
+					ourScore = 1,
+					rating = 5.399999999999999,
+					assists = 0,
+					resultWord = "LOSS"
+				},
+				{
+					theirScore = 0,
+					goals = 2,
+					opponent = "Manshine City",
+					ourScore = 3,
+					rating = 10,
+					assists = 0,
+					resultWord = "WIN"
+				},
+				{
+					theirScore = 1,
+					goals = 1,
+					opponent = "Ubers",
+					ourScore = 3,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				{
+					theirScore = 3,
+					goals = 0,
+					opponent = "Munchen",
+					ourScore = 2,
+					rating = 8.499999999999998,
+					assists = 2,
+					resultWord = "LOSS"
+				},
+				{
+					theirScore = 2,
+					goals = 1,
+					opponent = "PXG",
+					ourScore = 3,
+					rating = 9.15,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				{
+					theirScore = 3,
+					goals = 1,
+					opponent = "Manshine City",
+					ourScore = 2,
+					rating = 10,
+					assists = 1,
+					resultWord = "LOSS"
+				}
+			}
+		},
+		powerBudget = 500,
+		gauntletGoals = 29,
+		rewardedMatches = {
+			["tr:trAtailanta"] = true,
+			["u20:japan"] = true,
+			["tr:trFlimenco2"] = true,
+			["wc:england"] = true,
+			["tr:trMonao"] = true,
+			["tr:trCelticoss"] = true,
+			["wc:qf"] = true,
+			["wc:r32"] = true,
+			["wc:final"] = true,
+			["wc:nigeria"] = true,
+			["wc:r16"] = true,
+			["wc:france"] = true,
+			["wc:sf"] = true,
+			["tr:trFlimenco"] = true,
+			["tr:trWrexpool"] = true,
+			["wc:scrimmage"] = true,
+			["tr:trBogo"] = true,
+			["tr:trMarsello"] = true
+		},
+		speechRewarded = {
+			true,
+			true,
+			true
+		},
+		rivalry = {
+			history = {
+				{
+					score = "3-0",
+					result = "win",
+					opponent = "Cell of Hyoma Chigiri"
+				},
+				{
+					score = "3-0",
+					result = "win",
+					opponent = "Cell of Yuto Shimizu"
+				}
+			},
+			worldFiveResult = {
+				win = false,
+				score = "1-5",
+				assisted = true,
+				personallyScored = false,
+				reward = 30
+			},
+			opponentCells = {
+				{
+					id = "cell1",
+					members = {
+						"Jyubei Aryu",
+						"Nijiro Nanase",
+						"Naoki Matsumoto",
+						"Sota Yamazaki",
+						"Kenta Tanaka"
+					},
+					name = "Cell of Jyubei Aryu",
+					flavor = "the Iron Wall"
+				},
+				{
+					id = "cell3",
+					members = {
+						"Kenyu Yukimiya",
+						"Ren Takahashi",
+						"Haruto Mizuno",
+						"Itsuki Shimizu",
+						"Taiga Watanabe"
+					},
+					name = "Cell of Kenyu Yukimiya",
+					flavor = "the Crimson Foxes"
+				},
+				{
+					id = "cell4",
+					members = {
+						"Ranze Kurona",
+						"Kenji Aoyama",
+						"Seishiro Nagi",
+						"Takumi Takahashi",
+						"Riku Abe"
+					},
+					name = "Cell of Ranze Kurona",
+					flavor = "the Night Hawks"
+				},
+				{
+					id = "cell5",
+					members = {
+						"Gurimu Igarashi",
+						"Eita Otoya",
+						"Jin Kiyora",
+						"Riku Sasaki",
+						"Yuto Yamamoto"
+					},
+					name = "Cell of Gurimu Igarashi",
+					flavor = "the Ash Wolves"
+				},
+				{
+					id = "cell6",
+					members = {
+						"Jingo Raichi",
+						"Akira Kobayashi",
+						"Junichi Wanima",
+						"Jin Hayashi",
+						"Ryo Goto"
+					},
+					name = "Cell of Jingo Raichi",
+					flavor = "the Glass Cannons"
+				},
+				{
+					id = "cell7",
+					members = {
+						"Tanaka Hiroshi",
+						"Gin Gagamaru",
+						"Jinto Hyoga",
+						"Daiki Kobayashi",
+						"Daiki Okada"
+					},
+					name = "Cell of Tanaka Hiroshi",
+					flavor = "the Vertigo Line"
+				},
+				{
+					id = "cell9",
+					members = {
+						"Rensuke Kunigami",
+						"Asahi Naruhaya",
+						"Daichi Moriyama",
+						"Aoi Sato",
+						"Kazuki Yamada"
+					},
+					name = "Cell of Rensuke Kunigami",
+					flavor = "the Hollow Point"
+				},
+				{
+					id = "cell10",
+					members = {
+						"Sora Ishikawa",
+						"Hazime Nishioka",
+						"Zantetsu Tsurugi",
+						"Kazuki Hasegawa",
+						"Hayato Hasegawa"
+					},
+					name = "Cell of Sora Ishikawa",
+					flavor = "the Last Word"
+				},
+				{
+					id = "cell11",
+					members = {
+						"Itsuki Sakurai",
+						"Meguru Bachira",
+						"Yo Hiori",
+						"Kaede Hasegawa",
+						"Tsubasa Inoue"
+					},
+					name = "Cell of Itsuki Sakurai",
+					flavor = "the Iron Wall"
+				},
+				{
+					id = "cell12",
+					members = {
+						"Rin Itoshi",
+						"Reo Mikage",
+						"Ryusei Shidou",
+						"Ryo Inoue",
+						"Ryusei Yamamoto"
+					},
+					name = "Cell of Rin Itoshi",
+					flavor = "the Silent Blades"
+				},
+				{
+					id = "cell13",
+					members = {
+						"Kaito Fujimoto",
+						"Riku Hashimoto",
+						"Yuto Takahashi",
+						"Hayato Matsumoto",
+						"Makoto Sasaki"
+					},
+					name = "Cell of Kaito Fujimoto",
+					flavor = "the Crimson Foxes"
+				}
+			},
+			fillerData = {
+				["Kaede Hasegawa"] = {
+					filler = true,
+					clothing = "TeamY",
+					phases = {},
+					hairName = "Long Ninja",
+					overall = 7,
+					faceName = {
+						eyes = 2,
+						eyeColor = 7,
+						mouth = 6,
+						eyebrow = 1,
+						nose = 8
+					},
+					name = "Kaede Hasegawa",
+					hairColorIndex = 1,
+					skinIndex = 3
+				},
+				["Riku Hashimoto"] = {
+					filler = true,
+					clothing = "TeamZ",
+					phases = {},
+					hairName = "ShortSpiky",
+					overall = 1,
+					faceName = {
+						eyes = 6,
+						eyeColor = 9,
+						mouth = 10,
+						eyebrow = 10,
+						nose = 3
+					},
+					name = "Riku Hashimoto",
+					hairColorIndex = 16,
+					skinIndex = 2
+				},
+				["Itsuki Shimizu"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "ShortSpiky",
+					overall = 10,
+					faceName = {
+						eyes = 10,
+						eyeColor = 13,
+						mouth = 7,
+						eyebrow = 10,
+						nose = 3
+					},
+					name = "Itsuki Shimizu",
+					hairColorIndex = 9,
+					skinIndex = 5
+				},
+				["Daiki Kobayashi"] = {
+					filler = true,
+					clothing = "TeamZ",
+					phases = {},
+					hairName = "Taper",
+					overall = 11,
+					faceName = {
+						eyes = 7,
+						eyeColor = 8,
+						mouth = 6,
+						eyebrow = 8,
+						nose = 8
+					},
+					name = "Daiki Kobayashi",
+					hairColorIndex = 6,
+					skinIndex = 1
+				},
+				["Ryo Goto"] = {
+					filler = true,
+					clothing = "TeamY",
+					phases = {},
+					hairName = "Ruffled Up",
+					overall = 9,
+					faceName = {
+						eyes = 1,
+						eyeColor = 9,
+						mouth = 11,
+						eyebrow = 3,
+						nose = 1
+					},
+					name = "Ryo Goto",
+					hairColorIndex = 7,
+					skinIndex = 1
+				},
+				["Yuto Takahashi"] = {
+					filler = true,
+					clothing = "TeamX",
+					phases = {},
+					hairName = "Emo",
+					overall = 5,
+					faceName = {
+						eyes = 4,
+						eyeColor = 4,
+						mouth = 6,
+						eyebrow = 8,
+						nose = 9
+					},
+					name = "Yuto Takahashi",
+					hairColorIndex = 15,
+					skinIndex = 6
+				},
+				["Daiki Okada"] = {
+					filler = true,
+					clothing = "TeamZ",
+					phases = {},
+					hairName = "Locks",
+					overall = 6,
+					faceName = {
+						eyes = 7,
+						eyeColor = 9,
+						mouth = 7,
+						eyebrow = 5,
+						nose = 7
+					},
+					name = "Daiki Okada",
+					hairColorIndex = 8,
+					skinIndex = 4
+				},
+				["Kenta Tanaka"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Ruffled Up",
+					overall = 1,
+					faceName = {
+						eyes = 8,
+						eyeColor = 8,
+						mouth = 7,
+						eyebrow = 7,
+						nose = 1
+					},
+					name = "Kenta Tanaka",
+					hairColorIndex = 3,
+					skinIndex = 6
+				},
+				["Hayato Hasegawa"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Prince",
+					overall = 10,
+					faceName = {
+						eyes = 5,
+						eyeColor = 11,
+						mouth = 8,
+						eyebrow = 11,
+						nose = 11
+					},
+					name = "Hayato Hasegawa",
+					hairColorIndex = 1,
+					skinIndex = 2
+				},
+				["Ryo Inoue"] = {
+					filler = true,
+					clothing = "TeamZ",
+					phases = {},
+					hairName = "Bachira",
+					overall = 10,
+					faceName = {
+						eyes = 11,
+						eyeColor = 4,
+						mouth = 4,
+						eyebrow = 10,
+						nose = 10
+					},
+					name = "Ryo Inoue",
+					hairColorIndex = 5,
+					skinIndex = 3
+				},
+				["Taiga Watanabe"] = {
+					filler = true,
+					clothing = "TeamY",
+					phases = {},
+					hairName = "Emo",
+					overall = 7,
+					faceName = {
+						eyes = 11,
+						eyeColor = 1,
+						mouth = 6,
+						eyebrow = 8,
+						nose = 5
+					},
+					name = "Taiga Watanabe",
+					hairColorIndex = 14,
+					skinIndex = 3
+				},
+				["Tsubasa Inoue"] = {
+					filler = true,
+					clothing = "TeamX",
+					phases = {},
+					hairName = "Afro",
+					overall = 1,
+					faceName = {
+						eyes = 9,
+						eyeColor = 3,
+						mouth = 2,
+						eyebrow = 6,
+						nose = 5
+					},
+					name = "Tsubasa Inoue",
+					hairColorIndex = 14,
+					skinIndex = 6
+				},
+				["Riku Sasaki"] = {
+					filler = true,
+					clothing = "TeamX",
+					phases = {},
+					hairName = "Ruffled Up",
+					overall = 10,
+					faceName = {
+						eyes = 11,
+						eyeColor = 2,
+						mouth = 7,
+						eyebrow = 8,
+						nose = 7
+					},
+					name = "Riku Sasaki",
+					hairColorIndex = 9,
+					skinIndex = 4
+				},
+				["Jin Hayashi"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Charmer",
+					overall = 11,
+					faceName = {
+						eyes = 9,
+						eyeColor = 3,
+						mouth = 8,
+						eyebrow = 11,
+						nose = 3
+					},
+					name = "Jin Hayashi",
+					hairColorIndex = 16,
+					skinIndex = 4
+				},
+				["Kazuki Yamada"] = {
+					filler = true,
+					clothing = "TeamZ",
+					phases = {},
+					hairName = "Pure Elegance",
+					overall = 10,
+					faceName = {
+						eyes = 3,
+						eyeColor = 5,
+						mouth = 3,
+						eyebrow = 5,
+						nose = 10
+					},
+					name = "Kazuki Yamada",
+					hairColorIndex = 7,
+					skinIndex = 6
+				},
+				["Ryusei Yamamoto"] = {
+					filler = true,
+					clothing = "TeamX",
+					phases = {},
+					hairName = "Barou",
+					overall = 1,
+					faceName = {
+						eyes = 11,
+						eyeColor = 11,
+						mouth = 9,
+						eyebrow = 3,
+						nose = 3
+					},
+					name = "Ryusei Yamamoto",
+					hairColorIndex = 7,
+					skinIndex = 4
+				},
+				["Tsubasa Sato"] = {
+					filler = true,
+					clothing = "TeamX",
+					phases = {},
+					hairName = "Stylist",
+					overall = 6,
+					faceName = {
+						eyes = 11,
+						eyeColor = 13,
+						mouth = 7,
+						eyebrow = 5,
+						nose = 5
+					},
+					name = "Tsubasa Sato",
+					hairColorIndex = 9,
+					skinIndex = 5
+				},
+				["Makoto Sasaki"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Pure Elegance",
+					overall = 8,
+					faceName = {
+						eyes = 1,
+						eyeColor = 5,
+						mouth = 11,
+						eyebrow = 5,
+						nose = 9
+					},
+					name = "Makoto Sasaki",
+					hairColorIndex = 5,
+					skinIndex = 5
+				},
+				["Takumi Takahashi"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Prince",
+					overall = 7,
+					faceName = {
+						eyes = 9,
+						eyeColor = 4,
+						mouth = 3,
+						eyebrow = 10,
+						nose = 9
+					},
+					name = "Takumi Takahashi",
+					hairColorIndex = 6,
+					skinIndex = 5
+				},
+				["Hayato Matsumoto"] = {
+					filler = true,
+					clothing = "TeamY",
+					phases = {},
+					hairName = "Charmer",
+					overall = 4,
+					faceName = {
+						eyes = 1,
+						eyeColor = 1,
+						mouth = 5,
+						eyebrow = 6,
+						nose = 10
+					},
+					name = "Hayato Matsumoto",
+					hairColorIndex = 12,
+					skinIndex = 1
+				},
+				["Riku Abe"] = {
+					filler = true,
+					clothing = "TeamZ",
+					phases = {},
+					hairName = "Oddly Spiky",
+					overall = 2,
+					faceName = {
+						eyes = 3,
+						eyeColor = 8,
+						mouth = 8,
+						eyebrow = 6,
+						nose = 6
+					},
+					name = "Riku Abe",
+					hairColorIndex = 13,
+					skinIndex = 5
+				},
+				["Kazuki Hasegawa"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Prince",
+					overall = 3,
+					faceName = {
+						eyes = 1,
+						eyeColor = 12,
+						mouth = 4,
+						eyebrow = 8,
+						nose = 1
+					},
+					name = "Kazuki Hasegawa",
+					hairColorIndex = 13,
+					skinIndex = 2
+				},
+				["Sota Yamazaki"] = {
+					filler = true,
+					clothing = "TeamY",
+					phases = {},
+					hairName = "ShortSpiky",
+					overall = 3,
+					faceName = {
+						eyes = 2,
+						eyeColor = 7,
+						mouth = 11,
+						eyebrow = 11,
+						nose = 10
+					},
+					name = "Sota Yamazaki",
+					hairColorIndex = 7,
+					skinIndex = 3
+				},
+				["Yuto Yamamoto"] = {
+					filler = true,
+					clothing = "TeamW",
+					phases = {},
+					hairName = "Stylist",
+					overall = 3,
+					faceName = {
+						eyes = 8,
+						eyeColor = 5,
+						mouth = 1,
+						eyebrow = 4,
+						nose = 6
+					},
+					name = "Yuto Yamamoto",
+					hairColorIndex = 2,
+					skinIndex = 6
+				},
+				["Aoi Sato"] = {
+					filler = true,
+					clothing = "TeamY",
+					phases = {},
+					hairName = "Bachira",
+					overall = 2,
+					faceName = {
+						eyes = 4,
+						eyeColor = 12,
+						mouth = 8,
+						eyebrow = 3,
+						nose = 6
+					},
+					name = "Aoi Sato",
+					hairColorIndex = 9,
+					skinIndex = 1
+				}
+			},
+			cellMembers = {
+				"ASI HAMA",
+				"Aoshi Tokimitsu",
+				"Ikki Niko",
+				"Hyoma Chigiri",
+				"Tabito Karasu"
+			}
+		},
+		fieldPosition = "CB",
+		liveMatch = {
+			["Neo Egoist League|FC Barcha|Chicorid||"] = {
+				flow = 0,
+				soloPlays = 4,
+				momentum = 0,
+				staminaUsed = 0,
+				minute = 87,
+				rating = 6,
+				chemistryLeft = 2,
+				theirScore = 1,
+				moments = {},
+				tackles = 0,
+				ourScore = 7,
+				chemistryUsed = {},
+				assists = 0,
+				key = "Neo Egoist League|FC Barcha|Chicorid||",
+				rivalUses = 1,
+				doneMinute = 21,
+				goals = 0,
+				morale = 0.75,
+				stamina = 695,
+				skillUsesLeft = {
+					["Firework Lob"] = 2,
+					["Ember Hop"] = 2,
+					["Hare Comet"] = 2
+				},
+				pendingStats = {},
+				mateUses = 3
+			}
+		},
+		teamPhase = "First Selection Phase#4",
+		firstName = "Asi",
+		flow = {
+			aura = "Glamorous",
+			technique = "Total Immersion",
+			color = "Orange/Pink/Purple",
+			technique2 = "True King",
+			activation = "Shatter"
+		},
+		skinToneIndex = "#f2c7ac",
+		rankingsPhase = "First Selection Phase#4",
+		personalityPoints = {
+			OUTGOING = 3,
+			COLD = 2.5,
+			CONFIDENT = 1,
+			NEUTRAL = 0.5,
+			ARROGANT = 2
+		},
+		spGranted = 4315,
+		heightValue = 1,
+		secondSelection = {
+			roster = {
+				{
+					name = "Meguru Bachira",
+					team = "Team Z"
+				},
+				{
+					name = "Rensuke Kunigami",
+					team = "Team Z"
+				},
+				{
+					name = "Gurimu Igarashi",
+					team = "Team Z"
+				},
+				{
+					name = "Jinto Hyoga",
+					team = "Team Z"
+				},
+				{
+					name = "Hyoma Chigiri",
+					team = "Team Z"
+				},
+				{
+					name = "Asahi Naruhaya",
+					team = "Team Z"
+				},
+				{
+					name = "Jingo Raichi",
+					team = "Team Z"
+				},
+				{
+					name = "Gin Gagamaru",
+					team = "Team Z"
+				},
+				{
+					name = "Seishiro Nagi",
+					team = "Team V"
+				},
+				{
+					name = "Reo Mikage",
+					team = "Team V"
+				},
+				{
+					name = "Zantetsu Tsurugi",
+					team = "Team V"
+				},
+				{
+					name = "Ikki Niko",
+					team = "Team Y"
+				},
+				{
+					name = "Shoei Barou",
+					team = "Team X"
+				},
+				{
+					name = "Junichi Wanima",
+					team = "Team W"
+				},
+				{
+					name = "Ryusei Shidou",
+					team = "Second Selection"
+				},
+				{
+					name = "Kenji Aoyama",
+					team = "Second Selection"
+				},
+				{
+					name = "Ren Takahashi",
+					team = "Second Selection"
+				},
+				{
+					name = "Naoki Matsumoto",
+					team = "Second Selection"
+				},
+				{
+					name = "Kenyu Yukimiya",
+					team = "Second Selection"
+				},
+				{
+					name = "Yo Hiori",
+					team = "Second Selection"
+				},
+				{
+					name = "Jin Kiyora",
+					team = "Second Selection"
+				},
+				{
+					name = "Eita Otoya",
+					team = "Second Selection"
+				},
+				{
+					name = "Nijiro Nanase",
+					team = "Second Selection"
+				},
+				{
+					name = "Ranze Kurona",
+					team = "Second Selection"
+				},
+				{
+					name = "Tabito Karasu",
+					team = "Second Selection"
+				},
+				{
+					name = "Aoshi Tokimitsu",
+					team = "Second Selection"
+				},
+				{
+					name = "Jyubei Aryu",
+					team = "Second Selection"
+				},
+				{
+					name = "Kaito Fujimoto",
+					team = "Second Selection"
+				},
+				{
+					name = "Yuto Shimizu",
+					team = "Second Selection"
+				},
+				{
+					name = "Shota Hasegawa",
+					team = "Second Selection"
+				},
+				{
+					name = "Tanaka Hiroshi",
+					team = "Second Selection"
+				},
+				{
+					name = "Sora Ishikawa",
+					team = "Second Selection"
+				},
+				{
+					name = "Itsuki Sakurai",
+					team = "Second Selection"
+				},
+				{
+					name = "Haruto Mizuno",
+					team = "Second Selection"
+				},
+				{
+					name = "Daichi Moriyama",
+					team = "Second Selection"
+				},
+				{
+					name = "Riku Nakamura",
+					team = "Second Selection"
+				},
+				{
+					name = "Akira Kobayashi",
+					team = "Second Selection"
+				},
+				{
+					name = "Hazime Nishioka",
+					team = "Second Selection"
+				}
+			},
+			challengeRank = 132,
+			topTeams = {
+				"Team Z",
+				"Team V"
+			},
+		},
+		luckyRollsUsed = 148,
+		clothingOverride = "BrightneonKit",
+		relationships = {
+			["Ego Jinpachi"] = {
+				value = 0,
+				type = "Neutral"
+			},
+			["Pablo Cavazos"] = {
+				value = 25,
+				type = "Ally"
+			},
+			["Adam Blake"] = {
+				value = 25,
+				type = "Ally"
+			},
+			["Jinto Hyoga"] = {
+				value = -30,
+				type = "Enemy"
+			},
+			["Shoei Barou"] = {
+				value = 9,
+				type = "Ally"
+			},
+			["Kenyu Yukimiya"] = {
+				value = 36,
+				type = "Ally"
+			},
+			["Rensuke Kunigami"] = {
+				value = -9,
+				type = "Enemy"
+			},
+			["Sae Itoshi"] = {
+				value = 30,
+				type = "Ally"
+			},
+			["Kai Brennan"] = {
+				value = 24,
+				type = "Ally"
+			},
+			["Kayo Hitoma"] = {
+				value = 20,
+				type = "Ally"
+			},
+			["Malik Stone"] = {
+				value = 24,
+				type = "Ally"
+			},
+			["Seishiro Nagi"] = {
+				value = 36,
+				type = "Ally"
+			},
+			["Ryosuke Kira"] = {
+				value = -15,
+				type = "Enemy"
+			},
+			["Kenta Hoshino"] = {
+				value = 0,
+				type = "Neutral"
+			},
+			["Ryusei Shidou"] = {
+				value = 40,
+				type = "Ally"
+			},
+			["Kenji Aoyama"] = {
+				value = 36,
+				type = "Ally"
+			},
+			["Davi Luz"] = {
+				value = 24,
+				type = "Ally"
+			},
+			Florenso = {
+				value = -24,
+				type = "Enemy"
+			},
+			["Julien Loki"] = {
+				value = 25,
+				type = "Ally"
+			},
+			["Ikki Niko"] = {
+				value = 9,
+				type = "Ally"
+			},
+			["Rin Itoshi"] = {
+				value = 40,
+				type = "Ally"
+			},
+			["Min-jun Seo"] = {
+				value = 80,
+				type = "Ally"
+			},
+			["Reo Mikage"] = {
+				value = 27,
+				type = "Ally"
+			},
+			["Junichi Wanima"] = {
+				value = 9,
+				type = "Ally"
+			},
+			["Leonardo Luna"] = {
+				value = 25,
+				type = "Ally"
+			},
+			["Dada Silva"] = {
+				value = 25,
+				type = "Ally"
+			},
+			["Ren Takahashi"] = {
+				value = 36,
+				type = "Ally"
+			}
+		},
+		rankRevealed = true,
+		powerAt = 1793362100,
+		u20wc = {
+			training = {
+				results = {
+					"miss",
+					"good",
+					"miss",
+					"miss",
+					"miss"
+				},
+				sp = 5
+			},
+			cup = {
+				groupPlace = 1,
+				draws = {
+					r16 = "china",
+					qf = "germany",
+					r32 = "italy"
+				},
+				shown = {
+					lorenzo = true
+				},
+				results = {
+					sf = {
+						ourScore = 5,
+						opponent = "SPAIN",
+						goals = 2,
+						tackles = 1,
+						theirScore = 1,
+						rating = 10,
+						assists = 2,
+						resultWord = "WIN"
+					},
+					r16 = {
+						ourScore = 6,
+						opponent = "CHINA",
+						goals = 0,
+						tackles = 1,
+						theirScore = 0,
+						rating = 10,
+						assists = 4,
+						resultWord = "WIN"
+					},
+					final = {
+						ourScore = 3,
+						opponent = "FRANCE",
+						goals = 1,
+						tackles = 1,
+						theirScore = 2,
+						rating = 9.1,
+						assists = 0,
+						resultWord = "WIN"
+					},
+					france = {
+						ourScore = 4,
+						opponent = "FRANCE",
+						goals = 1,
+						tackles = 0,
+						theirScore = 6,
+						rating = 9,
+						assists = 3,
+						resultWord = "LOSS"
+					},
+					england = {
+						ourScore = 7,
+						opponent = "ENGLAND",
+						goals = 3,
+						tackles = 0,
+						theirScore = 5,
+						rating = 10,
+						assists = 1,
+						resultWord = "WIN"
+					},
+					r32 = {
+						ourScore = 4,
+						opponent = "ITALY",
+						goals = 1,
+						tackles = 1,
+						theirScore = 0,
+						rating = 10,
+						assists = 3,
+						resultWord = "WIN"
+					},
+					qf = {
+						ourScore = 5,
+						opponent = "GERMANY",
+						goals = 2,
+						tackles = 1,
+						theirScore = 0,
+						rating = 10,
+						assists = 2,
+						resultWord = "WIN"
+					},
+					nigeria = {
+						ourScore = 4,
+						opponent = "NISHERIA",
+						goals = 0,
+						tackles = 1,
+						theirScore = 2,
+						rating = 9.8,
+						assists = 2,
+						resultWord = "WIN"
+					}
+				},
+				complete = true,
+				groupTable = {
+					{
+						played = 3,
+						drawn = 0,
+						name = "JAPAN",
+						points = 6,
+						id = "japan",
+						won = 2,
+						gd = 2,
+						lost = 1
+					},
+					{
+						played = 3,
+						drawn = 0,
+						name = "FRANCE",
+						points = 6,
+						id = "france",
+						won = 2,
+						gd = 2,
+						lost = 1
+					},
+					{
+						played = 3,
+						drawn = 0,
+						name = "ENGLAND",
+						points = 3,
+						id = "england",
+						won = 1,
+						gd = 1,
+						lost = 2
+					},
+					{
+						played = 3,
+						drawn = 0,
+						name = "NISHERIA",
+						points = 3,
+						id = "nigeria",
+						won = 1,
+						gd = -5,
+						lost = 2
+					}
+				},
+				bench = {
+					"Ikki Niko",
+					"Hyoma Chigiri",
+					"Shoei Barou",
+					"Rensuke Kunigami",
+					"Yo Hiori",
+					"Ren Takahashi"
+				},
+				story = {
+					close_final = true,
+					weight = 35.474999999999994
+				},
+				paid = {
+					r32Win = true,
+					france = true,
+					englandWin = true,
+					finalWin = true,
+					england = true,
+					qfWin = true,
+					sfWin = true,
+					final = true,
+					sf = true,
+					r16 = true,
+					r16Win = true,
+					nigeriaWin = true,
+					nigeriaHalftime = true,
+					r32 = true,
+					qf = true,
+					nigeria = true
+				},
+				sae = true,
+				starter = true,
+				group = {
+					md1 = {
+						awayGoals = 1,
+						away = "england",
+						home = "france",
+						homeGoals = 2
+					},
+					md2 = {
+						awayGoals = 5,
+						away = "england",
+						home = "nigeria",
+						homeGoals = 1
+					},
+					md3 = {
+						awayGoals = 2,
+						away = "nigeria",
+						home = "france",
+						homeGoals = 1
+					}
+				},
+				lineup = {
+					{
+						role = "GK",
+						name = "Gin Gagamaru",
+						slot = 1
+					},
+					{
+						role = "LB",
+						name = "Reo Mikage",
+						slot = 2
+					},
+					{
+						role = "CB",
+						name = "player",
+						slot = 3
+					},
+					{
+						role = "CB",
+						name = "Oliver Aiku",
+						slot = 4
+					},
+					{
+						role = "RB",
+						name = "Tabito Karasu",
+						slot = 5
+					},
+					{
+						role = "CM",
+						name = "Meguru Bachira",
+						slot = 6
+					},
+					{
+						role = "CAM",
+						name = "Sae Itoshi",
+						slot = 7
+					},
+					{
+						role = "CM",
+						name = "Seishiro Nagi",
+						slot = 8
+					},
+					{
+						role = "LW",
+						name = "Ryusei Shidou",
+						slot = 9
+					},
+					{
+						role = "ST",
+						name = "Rin Itoshi",
+						slot = 10
+					},
+					{
+						role = "RW",
+						name = "Kenyu Yukimiya",
+						slot = 11
+					}
+				}
+			},
+			openingLineup = {
+				{
+					role = "GK",
+					name = "Gin Gagamaru",
+					slot = 1
+				},
+				{
+					role = "LB",
+					name = "Ikki Niko",
+					slot = 2
+				},
+				{
+					role = "CB",
+					name = "Oliver Aiku",
+					slot = 3
+				},
+				{
+					role = "CB",
+					name = "Tabito Karasu",
+					slot = 4
+				},
+				{
+					role = "RB",
+					name = "Meguru Bachira",
+					slot = 5
+				},
+				{
+					role = "CM",
+					name = "Reo Mikage",
+					slot = 6
+				},
+				{
+					role = "CAM",
+					name = "player",
+					slot = 7
+				},
+				{
+					role = "CM",
+					name = "Seishiro Nagi",
+					slot = 8
+				},
+				{
+					role = "LW",
+					name = "Ryusei Shidou",
+					slot = 9
+				},
+				{
+					role = "ST",
+					name = "Rin Itoshi",
+					slot = 10
+				},
+				{
+					role = "RW",
+					name = "Kenyu Yukimiya",
+					slot = 11
+				}
+			},
+			preArcDone = true,
+			australia = {
+				kai = "friendly",
+				starters = {
+					{
+						overall = 80,
+						hairColor = 6,
+						name = "Darcy Wilson",
+						face = {
+							eyes = 10,
+							eyeColor = 12,
+							mouth = 9,
+							eyebrow = 3,
+							nose = 2
+						},
+						skin = 4,
+						hair = "Sae Itoshi"
+					},
+					{
+						overall = 78,
+						hairColor = 5,
+						name = "Brodie Anderson",
+						face = {
+							eyes = 2,
+							eyeColor = 5,
+							mouth = 4,
+							eyebrow = 10,
+							nose = 4
+						},
+						skin = 2,
+						hair = "Emo"
+					},
+					{
+						overall = 82,
+						hairColor = 4,
+						name = "Beau Wilson",
+						face = {
+							eyes = 11,
+							eyeColor = 13,
+							mouth = 8,
+							eyebrow = 6,
+							nose = 5
+						},
+						skin = 5,
+						hair = "Barber Bro"
+					},
+					{
+						overall = 81,
+						hairColor = 6,
+						name = "Mason Martin",
+						face = {
+							eyes = 8,
+							eyeColor = 12,
+							mouth = 6,
+							eyebrow = 11,
+							nose = 9
+						},
+						skin = 4,
+						hair = "Chigiri"
+					},
+					{
+						overall = 78,
+						hairColor = 4,
+						name = "Jaxon Robinson",
+						face = {
+							eyes = 9,
+							eyeColor = 4,
+							mouth = 2,
+							eyebrow = 1,
+							nose = 11
+						},
+						skin = 5,
+						hair = "Emo"
+					},
+					{
+						overall = 79,
+						hairColor = 4,
+						name = "Lachlan Walker",
+						face = {
+							eyes = 1,
+							eyeColor = 10,
+							mouth = 6,
+							eyebrow = 5,
+							nose = 7
+						},
+						skin = 5,
+						hair = "Long Ninja"
+					},
+					{
+						overall = 79,
+						hairColor = 3,
+						name = "Darcy Johnson",
+						face = {
+							eyes = 11,
+							eyeColor = 2,
+							mouth = 9,
+							eyebrow = 11,
+							nose = 8
+						},
+						skin = 3,
+						hair = "Bachira"
+					},
+					{
+						overall = 80,
+						hairColor = 4,
+						name = "Liam Anderson",
+						face = {
+							eyes = 11,
+							eyeColor = 5,
+							mouth = 9,
+							eyebrow = 5,
+							nose = 6
+						},
+						skin = 5,
+						hair = "Stylist"
+					},
+					{
+						overall = 79,
+						hairColor = 1,
+						name = "Cooper Kelly",
+						face = {
+							eyes = 5,
+							eyeColor = 8,
+							mouth = 1,
+							eyebrow = 2,
+							nose = 7
+						},
+						skin = 2,
+						hair = "Extremely Egotistical"
+					},
+					{
+						overall = 79,
+						hairColor = 3,
+						name = "Riley Stewart",
+						face = {
+							eyes = 2,
+							eyeColor = 11,
+							mouth = 5,
+							eyebrow = 7,
+							nose = 1
+						},
+						skin = 2,
+						hair = "Charmer"
+					}
+				},
+				boomerang = "scored",
+				subs = {
+					{
+						overall = 66,
+						hairColor = 6,
+						name = "Cooper Martin",
+						face = {
+							eyes = 1,
+							eyeColor = 1,
+							mouth = 6,
+							eyebrow = 3,
+							nose = 6
+						},
+						skin = 4,
+						hair = "Super Bowl"
+					},
+					{
+						overall = 63,
+						hairColor = 3,
+						name = "Callum Stewart",
+						face = {
+							eyes = 2,
+							eyeColor = 2,
+							mouth = 8,
+							eyebrow = 4,
+							nose = 1
+						},
+						skin = 5,
+						hair = "Taper"
+					},
+					{
+						overall = 64,
+						hairColor = 2,
+						name = "Mitchell Robinson",
+						face = {
+							eyes = 8,
+							eyeColor = 11,
+							mouth = 7,
+							eyebrow = 11,
+							nose = 7
+						},
+						skin = 1,
+						hair = "Afro"
+					},
+					{
+						overall = 65,
+						hairColor = 3,
+						name = "Cooper White",
+						face = {
+							eyes = 2,
+							eyeColor = 2,
+							mouth = 11,
+							eyebrow = 9,
+							nose = 2
+						},
+						skin = 1,
+						hair = "Emo"
+					},
+					{
+						overall = 68,
+						hairColor = 4,
+						name = "Tyson Wilson",
+						face = {
+							eyes = 4,
+							eyeColor = 3,
+							mouth = 9,
+							eyebrow = 3,
+							nose = 8
+						},
+						skin = 4,
+						hair = "Long Ninja"
+					},
+					{
+						overall = 64,
+						hairColor = 5,
+						name = "Ethan Wilson",
+						face = {
+							eyes = 10,
+							eyeColor = 1,
+							mouth = 6,
+							eyebrow = 6,
+							nose = 7
+						},
+						skin = 5,
+						hair = "Messy"
+					},
+					{
+						overall = 63,
+						hairColor = 3,
+						name = "Jack Martin",
+						face = {
+							eyes = 10,
+							eyeColor = 10,
+							mouth = 9,
+							eyebrow = 6,
+							nose = 1
+						},
+						skin = 3,
+						hair = "Sae Itoshi"
+					},
+					{
+						overall = 62,
+						hairColor = 3,
+						name = "Liam Thompson",
+						face = {
+							eyes = 10,
+							eyeColor = 5,
+							mouth = 10,
+							eyebrow = 3,
+							nose = 9
+						},
+						skin = 2,
+						hair = "ShortSpiky"
+					},
+					{
+						overall = 62,
+						hairColor = 5,
+						name = "Liam Robinson",
+						face = {
+							eyes = 6,
+							eyeColor = 7,
+							mouth = 3,
+							eyebrow = 1,
+							nose = 10
+						},
+						skin = 1,
+						hair = "Oddly Spiky"
+					},
+					{
+						overall = 65,
+						hairColor = 1,
+						name = "Bailey Brown",
+						face = {
+							eyes = 4,
+							eyeColor = 9,
+							mouth = 3,
+							eyebrow = 2,
+							nose = 7
+						},
+						skin = 3,
+						hair = "MidLength"
+					}
+				},
+				complete = true,
+				best = {
+					boomerang = 0
+				},
+				match = "win"
+			},
+			squad = {
+				GK = "Seishiro Nagi",
+				RW = "Reo Mikage",
+				CB = "Kenji Aoyama",
+				LW = "Kenyu Yukimiya",
+				ST = "Ren Takahashi"
+			},
+			korea = {
+				complete = true,
+				spClaimed = 5,
+				greeting = "respect",
+				match = "lose"
+			},
+			finale = {
+				greeting = "bold",
+				spClaimed = 10,
+				teamOverall = 155,
+				match = "lose",
+				complete = true
+			},
+			madeList = true,
+			complete = true,
+			japanSquad = {
+				"Ryusei Shidou",
+				"Oliver Aiku",
+				"Yuto Shimizu",
+				"Aoshi Tokimitsu",
+				"Seishiro Nagi",
+				"Rin Itoshi",
+				"Kenji Aoyama",
+				"Ranze Kurona",
+				"Kenyu Yukimiya",
+				"Isamu Honda",
+				"Ren Takahashi",
+				"Shota Hasegawa",
+				"Yo Hiori",
+				"Tetsuya Maekawa",
+				"Rensuke Kunigami",
+				"Tabito Karasu",
+				"Meguru Bachira",
+				"Ikki Niko",
+				"Hyoma Chigiri",
+				"Reo Mikage",
+				"Shoei Barou",
+				"Gin Gagamaru"
+			},
+			mySpot = "CM",
+			brazil = {
+				complete = true,
+				davi = "humble",
+				crew = {
+					{
+						overall = 76,
+						hairColor = 2,
+						name = "Ryan Lima",
+						face = {
+							eyes = 9,
+							eyeColor = 5,
+							mouth = 4,
+							eyebrow = 11,
+							nose = 1
+						},
+						skin = 6,
+						hair = "Sae Itoshi"
+					},
+					{
+						overall = 79,
+						hairColor = 1,
+						name = "Maicon Lima",
+						face = {
+							eyes = 1,
+							eyeColor = 5,
+							mouth = 1,
+							eyebrow = 2,
+							nose = 11
+						},
+						skin = 4,
+						hair = "Messy"
+					},
+					{
+						overall = 78,
+						hairColor = 6,
+						name = "Yuri Santos",
+						face = {
+							eyes = 10,
+							eyeColor = 5,
+							mouth = 8,
+							eyebrow = 10,
+							nose = 10
+						},
+						skin = 6,
+						hair = "Pure Elegance"
+					}
+				},
+				bandeiraRewarded = true,
+				bandeira = "read",
+				best = {
+					footwork = 0
+				},
+				match = "win"
+			},
+			firorentiza = {
+				drill = 2,
+				matchRewardAmount = 10,
+				florenso = "rude",
+				matchRewarded = true,
+				complete = true,
+				roster = {
+					{
+						name = "Filippo Romano",
+						hairColor = 1,
+						face = {
+							eyes = 5,
+							eyeColor = 10,
+							mouth = 8,
+							eyebrow = 11,
+							nose = 9
+						},
+						skin = 3,
+						hair = "Long Ninja"
+					},
+					{
+						name = "Giuseppe De Luca",
+						hairColor = 1,
+						face = {
+							eyes = 7,
+							eyeColor = 4,
+							mouth = 2,
+							eyebrow = 11,
+							nose = 2
+						},
+						skin = 1,
+						hair = "Bachira"
+					},
+					{
+						name = "Edoardo Mancini",
+						hairColor = 2,
+						face = {
+							eyes = 10,
+							eyeColor = 13,
+							mouth = 10,
+							eyebrow = 3,
+							nose = 3
+						},
+						skin = 3,
+						hair = "Taper"
+					}
+				},
+				drillRewarded = true,
+				match = "win",
+				drillBest = 2
+			},
+			egypt = {
+				roster = {
+					{
+						name = "Hamza Soliman",
+						hairColor = 4,
+						face = {
+							eyes = 3,
+							eyeColor = 1,
+							mouth = 9,
+							eyebrow = 5,
+							nose = 2
+						},
+						skin = 3,
+						hair = "Emo"
+					},
+					{
+						name = "Walid Soliman",
+						hairColor = 3,
+						face = {
+							eyes = 11,
+							eyeColor = 4,
+							mouth = 7,
+							eyebrow = 8,
+							nose = 4
+						},
+						skin = 2,
+						hair = "Oddly Spiky"
+					},
+					{
+						name = "Karim Shehata",
+						hairColor = 4,
+						face = {
+							eyes = 8,
+							eyeColor = 13,
+							mouth = 2,
+							eyebrow = 7,
+							nose = 4
+						},
+						skin = 3,
+						hair = "Prince"
+					},
+					{
+						name = "Sherif Nasser",
+						hairColor = 2,
+						face = {
+							eyes = 7,
+							eyeColor = 13,
+							mouth = 8,
+							eyebrow = 11,
+							nose = 6
+						},
+						skin = 5,
+						hair = "Bachira"
+					},
+					{
+						name = "Hany Hegazy",
+						hairColor = 4,
+						face = {
+							eyes = 3,
+							eyeColor = 11,
+							mouth = 4,
+							eyebrow = 5,
+							nose = 8
+						},
+						skin = 1,
+						hair = "Super Bowl"
+					}
+				},
+				u18Rewarded = true,
+				u18 = "win",
+				streetRewarded = true,
+				complete = true,
+				street = "declined"
+			},
+			moldy = {
+				starters = {
+					{
+						overall = 76,
+						hairColor = 4,
+						name = "Sigurd Solberg",
+						face = {
+							eyes = 2,
+							eyeColor = 9,
+							mouth = 8,
+							eyebrow = 4,
+							nose = 9
+						},
+						skin = 3,
+						hair = "Charmer"
+					},
+					{
+						overall = 77,
+						hairColor = 1,
+						name = "J\195\184rgen Berg",
+						face = {
+							eyes = 11,
+							eyeColor = 10,
+							mouth = 1,
+							eyebrow = 9,
+							nose = 1
+						},
+						skin = 1,
+						hair = "MidLength"
+					},
+					{
+						overall = 72,
+						hairColor = 5,
+						name = "Lars Lie",
+						face = {
+							eyes = 9,
+							eyeColor = 11,
+							mouth = 9,
+							eyebrow = 11,
+							nose = 9
+						},
+						skin = 3,
+						hair = "Curly"
+					},
+					{
+						overall = 78,
+						hairColor = 1,
+						name = "Anders Jensen",
+						face = {
+							eyes = 6,
+							eyeColor = 10,
+							mouth = 1,
+							eyebrow = 5,
+							nose = 11
+						},
+						skin = 5,
+						hair = "Prince"
+					},
+					{
+						overall = 72,
+						hairColor = 4,
+						name = "\195\152ystein Lie",
+						face = {
+							eyes = 10,
+							eyeColor = 10,
+							mouth = 8,
+							eyebrow = 1,
+							nose = 2
+						},
+						skin = 4,
+						hair = "Rin Itoshi"
+					},
+					{
+						overall = 74,
+						hairColor = 6,
+						name = "Odin Andersen",
+						face = {
+							eyes = 1,
+							eyeColor = 8,
+							mouth = 7,
+							eyebrow = 9,
+							nose = 10
+						},
+						skin = 4,
+						hair = "Isagi"
+					},
+					{
+						overall = 78,
+						hairColor = 5,
+						name = "Mathias Strand",
+						face = {
+							eyes = 4,
+							eyeColor = 11,
+							mouth = 10,
+							eyebrow = 7,
+							nose = 7
+						},
+						skin = 3,
+						hair = "Barou"
+					},
+					{
+						overall = 77,
+						hairColor = 2,
+						name = "Eskil Solberg",
+						face = {
+							eyes = 4,
+							eyeColor = 11,
+							mouth = 11,
+							eyebrow = 11,
+							nose = 5
+						},
+						skin = 2,
+						hair = "Emo"
+					},
+					{
+						overall = 75,
+						hairColor = 1,
+						name = "Emil Dahl",
+						face = {
+							eyes = 8,
+							eyeColor = 10,
+							mouth = 6,
+							eyebrow = 10,
+							nose = 6
+						},
+						skin = 4,
+						hair = "Super Bowl"
+					},
+					{
+						overall = 78,
+						hairColor = 1,
+						name = "Henrik Kristiansen",
+						face = {
+							eyes = 9,
+							eyeColor = 5,
+							mouth = 7,
+							eyebrow = 5,
+							nose = 3
+						},
+						skin = 2,
+						hair = "Extremely Egotistical"
+					},
+					{
+						overall = 78,
+						hairColor = 1,
+						name = "Emil Halvorsen",
+						face = {
+							eyes = 5,
+							eyeColor = 4,
+							mouth = 10,
+							eyebrow = 11,
+							nose = 11
+						},
+						skin = 3,
+						hair = "Twins"
+					}
+				},
+				complete = true,
+				subs = {
+					{
+						overall = 62,
+						hairColor = 4,
+						name = "Stian Bakken",
+						face = {
+							eyes = 5,
+							eyeColor = 2,
+							mouth = 8,
+							eyebrow = 3,
+							nose = 5
+						},
+						skin = 1,
+						hair = "ShortSpiky"
+					},
+					{
+						overall = 62,
+						hairColor = 1,
+						name = "Kristian Nyg\195\165rd",
+						face = {
+							eyes = 2,
+							eyeColor = 2,
+							mouth = 2,
+							eyebrow = 2,
+							nose = 6
+						},
+						skin = 4,
+						hair = "Oddly Spiky"
+					},
+					{
+						overall = 65,
+						hairColor = 3,
+						name = "Vegard Bakken",
+						face = {
+							eyes = 7,
+							eyeColor = 2,
+							mouth = 11,
+							eyebrow = 5,
+							nose = 4
+						},
+						skin = 4,
+						hair = "Slickback"
+					},
+					{
+						overall = 63,
+						hairColor = 3,
+						name = "Stian Berg",
+						face = {
+							eyes = 10,
+							eyeColor = 8,
+							mouth = 11,
+							eyebrow = 5,
+							nose = 7
+						},
+						skin = 5,
+						hair = "Twins"
+					},
+					{
+						overall = 60,
+						hairColor = 4,
+						name = "Aksel Hansen",
+						face = {
+							eyes = 4,
+							eyeColor = 4,
+							mouth = 10,
+							eyebrow = 5,
+							nose = 7
+						},
+						skin = 3,
+						hair = "Emo"
+					},
+					{
+						overall = 65,
+						hairColor = 4,
+						name = "Sigurd Hansen",
+						face = {
+							eyes = 8,
+							eyeColor = 5,
+							mouth = 9,
+							eyebrow = 1,
+							nose = 8
+						},
+						skin = 2,
+						hair = "ShortSpiky"
+					},
+					{
+						overall = 65,
+						hairColor = 5,
+						name = "\195\152ystein Haugen",
+						face = {
+							eyes = 1,
+							eyeColor = 13,
+							mouth = 8,
+							eyebrow = 1,
+							nose = 2
+						},
+						skin = 2,
+						hair = "Curly"
+					},
+					{
+						overall = 65,
+						hairColor = 3,
+						name = "Magnus Moen",
+						face = {
+							eyes = 3,
+							eyeColor = 11,
+							mouth = 7,
+							eyebrow = 7,
+							nose = 3
+						},
+						skin = 4,
+						hair = "Messy"
+					},
+					{
+						overall = 66,
+						hairColor = 3,
+						name = "Sigurd Lie",
+						face = {
+							eyes = 4,
+							eyeColor = 4,
+							mouth = 10,
+							eyebrow = 5,
+							nose = 2
+						},
+						skin = 1,
+						hair = "MidLength"
+					},
+					{
+						overall = 62,
+						hairColor = 3,
+						name = "\195\152ystein Larsen",
+						face = {
+							eyes = 10,
+							eyeColor = 8,
+							mouth = 6,
+							eyebrow = 11,
+							nose = 5
+						},
+						skin = 5,
+						hair = "Charmer"
+					}
+				},
+				best = {
+					shooting = 0,
+					speed = 6
+				},
+				favourite = "speed",
+				match = "win"
+			},
+			america = {
+				starters = {
+					{
+						overall = 85,
+						hairColor = 3,
+						name = "DeAndre Reyes",
+						face = {
+							eyes = 8,
+							eyeColor = 13,
+							mouth = 6,
+							eyebrow = 10,
+							nose = 2
+						},
+						skin = 6,
+						hair = "Prince"
+					},
+					{
+						overall = 87,
+						hairColor = 4,
+						name = "Emeka Williams",
+						face = {
+							eyes = 8,
+							eyeColor = 6,
+							mouth = 6,
+							eyebrow = 4,
+							nose = 8
+						},
+						skin = 6,
+						hair = "Locks"
+					},
+					{
+						overall = 85,
+						hairColor = 3,
+						name = "Cameron Park",
+						face = {
+							eyes = 7,
+							eyeColor = 2,
+							mouth = 11,
+							eyebrow = 6,
+							nose = 3
+						},
+						skin = 7,
+						hair = "Prince"
+					},
+					{
+						overall = 87,
+						hairColor = 5,
+						name = "Nico Mensah",
+						face = {
+							eyes = 1,
+							eyeColor = 2,
+							mouth = 5,
+							eyebrow = 11,
+							nose = 6
+						},
+						skin = 6,
+						hair = "Twins"
+					},
+					{
+						overall = 86,
+						hairColor = 6,
+						name = "Dominic Park",
+						face = {
+							eyes = 5,
+							eyeColor = 13,
+							mouth = 10,
+							eyebrow = 3,
+							nose = 6
+						},
+						skin = 3,
+						hair = "Rin Itoshi"
+					},
+					{
+						overall = 83,
+						hairColor = 4,
+						name = "Jaylen Rivera",
+						face = {
+							eyes = 11,
+							eyeColor = 2,
+							mouth = 8,
+							eyebrow = 4,
+							nose = 10
+						},
+						skin = 2,
+						hair = "Locks"
+					},
+					{
+						overall = 86,
+						hairColor = 2,
+						name = "Julian Williams",
+						face = {
+							eyes = 6,
+							eyeColor = 13,
+							mouth = 3,
+							eyebrow = 2,
+							nose = 6
+						},
+						skin = 3,
+						hair = "Taper"
+					},
+					{
+						overall = 83,
+						hairColor = 2,
+						name = "Dominic Garcia",
+						face = {
+							eyes = 5,
+							eyeColor = 1,
+							mouth = 4,
+							eyebrow = 10,
+							nose = 3
+						},
+						skin = 6,
+						hair = "Bachira"
+					},
+					{
+						overall = 87,
+						hairColor = 2,
+						name = "Tobias Rivera",
+						face = {
+							eyes = 2,
+							eyeColor = 3,
+							mouth = 8,
+							eyebrow = 8,
+							nose = 2
+						},
+						skin = 5,
+						hair = "Taper"
+					},
+					{
+						overall = 83,
+						hairColor = 1,
+						name = "Jaylen Bennett",
+						face = {
+							eyes = 1,
+							eyeColor = 9,
+							mouth = 10,
+							eyebrow = 7,
+							nose = 11
+						},
+						skin = 7,
+						hair = "Ruffled Up"
+					}
+				},
+				match = "win",
+				best = {
+					dash = 6,
+					bench = 2
+				},
+				subs = {
+					{
+						overall = 72,
+						hairColor = 6,
+						name = "Zion Price",
+						face = {
+							eyes = 8,
+							eyeColor = 2,
+							mouth = 2,
+							eyebrow = 3,
+							nose = 11
+						},
+						skin = 3,
+						hair = "Pure Elegance"
+					},
+					{
+						overall = 69,
+						hairColor = 4,
+						name = "Jaylen Okafor",
+						face = {
+							eyes = 9,
+							eyeColor = 3,
+							mouth = 2,
+							eyebrow = 8,
+							nose = 5
+						},
+						skin = 1,
+						hair = "Barou"
+					},
+					{
+						overall = 67,
+						hairColor = 6,
+						name = "Xavier Hayes",
+						face = {
+							eyes = 4,
+							eyeColor = 11,
+							mouth = 5,
+							eyebrow = 5,
+							nose = 5
+						},
+						skin = 3,
+						hair = "Stylist"
+					},
+					{
+						overall = 66,
+						hairColor = 1,
+						name = "Zion Hernandez",
+						face = {
+							eyes = 11,
+							eyeColor = 9,
+							mouth = 9,
+							eyebrow = 3,
+							nose = 8
+						},
+						skin = 1,
+						hair = "Messy"
+					},
+					{
+						overall = 72,
+						hairColor = 5,
+						name = "Luca Osei",
+						face = {
+							eyes = 5,
+							eyeColor = 6,
+							mouth = 3,
+							eyebrow = 10,
+							nose = 5
+						},
+						skin = 1,
+						hair = "Long Ninja"
+					},
+					{
+						overall = 71,
+						hairColor = 5,
+						name = "Kofi Washington",
+						face = {
+							eyes = 2,
+							eyeColor = 8,
+							mouth = 5,
+							eyebrow = 5,
+							nose = 2
+						},
+						skin = 1,
+						hair = "Emo"
+					},
+					{
+						overall = 68,
+						hairColor = 4,
+						name = "Diego Bennett",
+						face = {
+							eyes = 7,
+							eyeColor = 4,
+							mouth = 8,
+							eyebrow = 4,
+							nose = 9
+						},
+						skin = 3,
+						hair = "Oddly Spiky"
+					},
+					{
+						overall = 66,
+						hairColor = 1,
+						name = "Dominic Osei",
+						face = {
+							eyes = 11,
+							eyeColor = 11,
+							mouth = 11,
+							eyebrow = 4,
+							nose = 1
+						},
+						skin = 1,
+						hair = "Pure Elegance"
+					},
+					{
+						overall = 70,
+						hairColor = 5,
+						name = "Kwame Washington",
+						face = {
+							eyes = 5,
+							eyeColor = 3,
+							mouth = 2,
+							eyebrow = 5,
+							nose = 9
+						},
+						skin = 4,
+						hair = "Sae Itoshi"
+					},
+					{
+						overall = 66,
+						hairColor = 2,
+						name = "Cameron Carter",
+						face = {
+							eyes = 7,
+							eyeColor = 2,
+							mouth = 4,
+							eyebrow = 4,
+							nose = 9
+						},
+						skin = 2,
+						hair = "Oddly Spiky"
+					}
+				},
+				malik = "stood",
+				oneOnOne = "lost",
+				complete = true
+			},
+			preAverage = 9.46,
+			saeChoice = 2,
+			results = {
+				["WC NISHERIA nigeria"] = {
+					ourScore = 4,
+					opponent = "NISHERIA",
+					goals = 0,
+					tackles = 1,
+					theirScore = 2,
+					rating = 9.8,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				["WC ITALY r32"] = {
+					ourScore = 4,
+					opponent = "ITALY",
+					goals = 1,
+					tackles = 1,
+					theirScore = 0,
+					rating = 10,
+					assists = 3,
+					resultWord = "WIN"
+				},
+				["Egypt U-18"] = {
+					ourScore = 9,
+					opponent = "Egypt U-18",
+					goals = 7,
+					tackles = 2,
+					theirScore = 1,
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				["Japan Second Team"] = {
+					ourScore = 3,
+					opponent = "Japan Second Team",
+					goals = 2,
+					tackles = 0,
+					theirScore = 6,
+					rating = 9.9,
+					assists = 0,
+					resultWord = "LOSS"
+				},
+				["WC SPAIN sf"] = {
+					ourScore = 5,
+					opponent = "SPAIN",
+					goals = 2,
+					tackles = 1,
+					theirScore = 1,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				["Firorentiza U-18"] = {
+					ourScore = 7,
+					opponent = "Firorentiza U-18",
+					goals = 3,
+					tackles = 1,
+					theirScore = 4,
+					rating = 10,
+					assists = 3,
+					resultWord = "WIN"
+				},
+				["WC FRANCE final"] = {
+					ourScore = 3,
+					opponent = "FRANCE",
+					goals = 1,
+					tackles = 1,
+					theirScore = 2,
+					rating = 9.1,
+					assists = 0,
+					resultWord = "WIN"
+				},
+				["WC CHINA r16"] = {
+					ourScore = 6,
+					opponent = "CHINA",
+					goals = 0,
+					tackles = 1,
+					theirScore = 0,
+					rating = 10,
+					assists = 4,
+					resultWord = "WIN"
+				},
+				["WC FRANCE france"] = {
+					ourScore = 4,
+					opponent = "FRANCE",
+					goals = 1,
+					tackles = 0,
+					theirScore = 6,
+					rating = 9,
+					assists = 3,
+					resultWord = "LOSS"
+				},
+				["Favela Crew"] = {
+					ourScore = 5,
+					opponent = "Favela Crew",
+					goals = 2,
+					tackles = 0,
+					theirScore = 1,
+					rating = 9.9,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				["GLS Next Stars"] = {
+					ourScore = 6,
+					opponent = "GLS Next Stars",
+					goals = 2,
+					tackles = 1,
+					theirScore = 4,
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				["WC ENGLAND england"] = {
+					ourScore = 7,
+					opponent = "ENGLAND",
+					goals = 3,
+					tackles = 0,
+					theirScore = 5,
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				["WC GERMANY qf"] = {
+					ourScore = 5,
+					opponent = "GERMANY",
+					goals = 2,
+					tackles = 1,
+					theirScore = 0,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				["Moldy U-18"] = {
+					ourScore = 5,
+					opponent = "Moldy U-18",
+					goals = 0,
+					tackles = 1,
+					theirScore = 3,
+					rating = 7.2,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				["Seo Academy"] = {
+					ourScore = 2,
+					opponent = "Seo Academy",
+					goals = 2,
+					tackles = 0,
+					theirScore = 5,
+					rating = 8.7,
+					assists = 0,
+					resultWord = "LOSS"
+				},
+				["Australia U-18"] = {
+					ourScore = 4,
+					opponent = "Australia U-18",
+					goals = 3,
+					tackles = 1,
+					theirScore = 2,
+					rating = 10,
+					assists = 0,
+					resultWord = "WIN"
+				}
+			}
+		},
+		phaseTwo = {
+			complete = true
+		},
+		trials = {
+			newGen = "XI",
+			started = true,
+			signed = "Brightneon",
+			results = {
+				trCelticoss = {
+					theirScore = 2,
+					goals = 0,
+					tackles = 0,
+					ourScore = 4,
+					rating = 10,
+					assists = 4,
+					resultWord = "WIN"
+				},
+				trWrexpool = {
+					theirScore = 0,
+					goals = 0,
+					tackles = 2,
+					ourScore = 2,
+					rating = 10,
+					assists = 1,
+					resultWord = "WIN"
+				},
+				trBogo = {
+					theirScore = 0,
+					goals = 1,
+					tackles = 3,
+					ourScore = 4,
+					rating = 10,
+					assists = 3,
+					resultWord = "WIN"
+				},
+				trFlimenco2 = {
+					theirScore = 2,
+					goals = 1,
+					tackles = 1,
+					ourScore = 4,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				trMarsello = {
+					theirScore = 1,
+					goals = 0,
+					tackles = 0,
+					ourScore = 4,
+					rating = 9.5,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				trAtailanta = {
+					theirScore = 0,
+					goals = 0,
+					tackles = 1,
+					ourScore = 2,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				trFlimenco = {
+					theirScore = 1,
+					goals = 1,
+					tackles = 1,
+					ourScore = 8,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				},
+				trMonao = {
+					theirScore = 1,
+					goals = 1,
+					tackles = 2,
+					ourScore = 4,
+					rating = 10,
+					assists = 2,
+					resultWord = "WIN"
+				}
+			},
+			weekDone = true,
+			wage = 17500
+		},
+		rinChallengeSeen = true,
+		weaponRollsUsed = {
+			7,
+			0
+		},
+		secondSelectionTeam = {
+			"ASI HAMA",
+			"Aoshi Tokimitsu",
+			"Ikki Niko",
+			"Hyoma Chigiri",
+			"Tabito Karasu"
+		},
+		u20 = {
+			trainingPaid = true,
+			interviewed = true,
+			result = {
+				theirScore = 9,
+				goals = 5,
+				ourScore = 10,
+				rating = 10,
+				assists = 1,
+				resultWord = "WIN"
+			},
+			stage = 7,
+			complete = true
+		},
+		weaponsVersion = 155,
+		selectionGoal = "topScorer",
+		skillPoints = 927,
+		weapon = {
+			staminaScale = 3,
+			chanceStat = "Speed",
+			successText = "GODSPEED. He wins it and is gone before anyone turns around.",
+			weaponName = "GOD SPRINTER",
+			style = "godspeed",
+			successRate = 75,
+			scenario = "defending",
+			name = "GODSPEED",
+			description = "Launch at the man on the ball, leaving afterimages behind, rip it off him and burst on into the space he left.",
+			rarity = "World Class"
+		}
+	}
+}
+game:GetService("ReplicatedStorage"):WaitForChild("SlotRemotes"):WaitForChild("SaveSlot"):InvokeServer(unpack(args))
+local args = {
+	slotNum
+}
+game:GetService("ReplicatedStorage"):WaitForChild("SlotRemotes"):WaitForChild("DeleteSlot"):InvokeServer(unpack(args))
+end
+
+-- Small toggle UI
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "SlotLoopToggle"
+gui.ResetOnSpawn = false
+
+local button = Instance.new("TextButton")
+button.Name = "ToggleButton"
+button.Size = UDim2.new(0, 190, 0, 42)
+button.Position = UDim2.new(0, 20, 0, 180)
+button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.TextSize = 16
+button.Font = Enum.Font.GothamBold
+button.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = button
+
+local function updateButton()
+    local selected = {}
+    for slotNum = 1, 8 do
+        if slots["slot" .. slotNum] then
+            table.insert(selected, tostring(slotNum))
+        end
+    end
+
+    local slotText = #selected > 0 and table.concat(selected, ", ") or "None"
+    button.Text = (loopEnabled and "Loop: ON" or "Loop: OFF") .. " | Slots: " .. slotText
+    button.BackgroundColor3 = loopEnabled
+        and Color3.fromRGB(35, 130, 65)
+        or Color3.fromRGB(130, 45, 45)
+end
+
+local function setLoopEnabled(enabled)
+    loopEnabled = enabled
+    updateButton()
+
+    if loopEnabled and not loopThreadRunning then
+        loopThreadRunning = true
+        task.spawn(function()
+            while loopEnabled do
+                for slotNum = 1, 8 do
+                    if not loopEnabled then
+                        break
+                    end
+
+                    if slots["slot" .. slotNum] then
+                        local ok, err = pcall(processSlot, slotNum)
+                        if not ok then
+                            warn("Slot " .. slotNum .. " failed: " .. tostring(err))
+                        end
+                        task.wait()
+                    end
+                end
+                task.wait()
+            end
+
+            loopThreadRunning = false
+        end)
+    end
+end
+
+button.Activated:Connect(function()
+    setLoopEnabled(not loopEnabled)
+end)
+
+-- Parent to the executor UI container when available, otherwise CoreGui.
+local parentGui = CoreGui
+if typeof(gethui) == "function" then
+    local ok, hui = pcall(gethui)
+    if ok and hui then
+        parentGui = hui
+    end
+end
+
+gui.Parent = parentGui
+updateButton()
+
+-- Honor Enabled from the loader when the script first starts.
+if loopEnabled then
+    setLoopEnabled(true)
+end
