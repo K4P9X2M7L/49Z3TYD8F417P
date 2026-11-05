@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -16,9 +17,13 @@ local NpcOveralls = require(ReplicatedStorage:WaitForChild("NpcOveralls"))
 local SaveSlot = ReplicatedStorage.SlotRemotes:WaitForChild("SaveSlot")
 local RedeemRemote = ReplicatedStorage.CodeRemotes:WaitForChild("RedeemCode")
 
---// SLOT FARM CONFIGURATION
 local SlotFarmConfig = {
     Enabled = false,
+    Attempts = 0,
+    AutoStop = false,
+    AttemptLimit = 0,
+    StartedAt = 0,
+    EndedAt = 0,
     Slots = {
         [1] = false,
         [2] = false,
@@ -52,15 +57,11 @@ local function loadSlotFarm()
     local success, result = pcall(function()
         local source = game:HttpGet(SLOT_FARM_URL)
 
-        -- The downloaded module snapshots Enabled/Slots only once.
-        -- Replace its one-shot loop with a persistent loop that reads
-        -- SlotConfig live, so the UI can stop/restart it and change slots.
         local loopStart = source:find("%-%- Script%-only toggle:")
         local loopEnd = source:find("%-%- Start only when Enabled = true in the loader configuration%.")
         assert(loopStart and loopEnd and loopEnd > loopStart, "Could not locate farm loop section")
 
         local replacement = [[
--- Live SlotConfig loop: Enabled and Slots are read every cycle.
 task.spawn(function()
     while true do
         if config.Enabled == true then
@@ -71,9 +72,19 @@ task.spawn(function()
 
                 if config.Slots and config.Slots[slotNum] == true then
                     local ok, err = pcall(processSlot, slotNum)
-                    if not ok then
-                        warn("Slot " .. slotNum .. " failed: " .. tostring(err))
+                    local env = (getgenv and getgenv()) or _G
+                    env.SlotFarmStats = env.SlotFarmStats or {}
+                    env.SlotFarmStats.Attempts = (env.SlotFarmStats.Attempts or 0) + 1
+                    config.Attempts = env.SlotFarmStats.Attempts
+
+                    if config.AutoStop == true
+                        and tonumber(config.AttemptLimit)
+                        and tonumber(config.AttemptLimit) > 0
+                        and config.Attempts >= tonumber(config.AttemptLimit) then
+                        config.Enabled = false
+                        config.EndedAt = os.clock()
                     end
+
                     task.wait()
                 end
             end
@@ -100,33 +111,32 @@ end)
 
     SlotFarmConfig.Enabled = false
     SlotFarmLoadError = tostring(result)
-    warn("[Slot Farm] Failed to load:", result)
     return false
 end
-
 
 local MIN_HEIGHT = 63
 local MAX_HEIGHT = 78
 local MIN_HEIGHT_VALUE = 0.013950893585538896
 
 local Theme = {
-    Background = Color3.fromRGB(25, 26, 29),
-    Header = Color3.fromRGB(30, 31, 35),
-    Panel = Color3.fromRGB(35, 36, 41),
-    Section = Color3.fromRGB(41, 42, 48),
-    Input = Color3.fromRGB(49, 50, 57),
-    Hover = Color3.fromRGB(59, 61, 68),
+    Background = Color3.fromRGB(17, 19, 24),
+    Header = Color3.fromRGB(22, 24, 30),
+    Panel = Color3.fromRGB(26, 29, 36),
+    Section = Color3.fromRGB(32, 35, 43),
+    Input = Color3.fromRGB(39, 43, 52),
+    Hover = Color3.fromRGB(49, 54, 65),
 
-    Accent = Color3.fromRGB(133, 177, 224),
-    AccentDark = Color3.fromRGB(67, 94, 123),
-    AccentLight = Color3.fromRGB(183, 208, 235),
+    Accent = Color3.fromRGB(145, 155, 255),
+    AccentDark = Color3.fromRGB(77, 88, 160),
+    AccentLight = Color3.fromRGB(205, 210, 255),
 
     Text = Color3.fromRGB(243, 243, 246),
     Muted = Color3.fromRGB(157, 159, 167),
     Subtle = Color3.fromRGB(112, 115, 123),
-    Border = Color3.fromRGB(68, 69, 76),
+    Border = Color3.fromRGB(57, 62, 76),
 
     Green = Color3.fromRGB(120, 190, 145),
+    Warning = Color3.fromRGB(218, 171, 104),
     Red = Color3.fromRGB(220, 112, 118),
 }
 
@@ -244,11 +254,6 @@ local function getBondMaximum(name)
     return 300
 end
 
-print(
-    "[Character Creator] Chemistry NPCs detected:",
-    #ChemistryNPCs
-)
-
 local function create(class, props, parent)
     local object = Instance.new(class)
 
@@ -293,6 +298,15 @@ local function heightText(inches)
     )
 end
 
+local function heightInchesFromValue(value)
+    local numeric = tonumber(value)
+    if not numeric then
+        return MIN_HEIGHT
+    end
+    local alpha = (numeric - MIN_HEIGHT_VALUE) / (1 - MIN_HEIGHT_VALUE)
+    return math.clamp(math.floor(MIN_HEIGHT + alpha * (MAX_HEIGHT - MIN_HEIGHT) + 0.5), MIN_HEIGHT, MAX_HEIGHT)
+end
+
 local function getNames(list)
     local result = {}
 
@@ -332,10 +346,149 @@ local function getActiveCodes()
     return result
 end
 
+local function mergeNames(...)
+    local result, seen = {}, {}
+    for _, source in ipairs({...}) do
+        for _, name in ipairs(getNames(source)) do
+            if not seen[name] then
+                seen[name] = true
+                table.insert(result, name)
+            end
+        end
+    end
+    table.sort(result)
+    return result
+end
+
 local Techniques = getNames(FlowData.techniques)
-local Auras = getNames(FlowData.rollableAuras or FlowData.auras)
-local Colors = getNames(FlowData.rollableColors or FlowData.colors)
+-- Merge rollable and full catalogues so event/Halloween entries are not hidden
+-- just because they are absent from the normal roll pool.
+local Auras = mergeNames(FlowData.auras, FlowData.rollableAuras)
+local Colors = mergeNames(FlowData.colors, FlowData.rollableColors)
 local Activations = getNames(FlowData.activations)
+
+-- Read rarity/limited metadata from the original FlowData records.
+local function findFlowEntry(name, key)
+    local sources = {}
+    if key == "ModifierTechnique" then
+        sources = {FlowData.techniques}
+    elseif key == "ModifierAura" then
+        sources = {FlowData.auras, FlowData.rollableAuras}
+    elseif key == "ModifierColor" then
+        sources = {FlowData.colors, FlowData.rollableColors}
+    elseif key == "ModifierActivation" then
+        sources = {FlowData.activations}
+    end
+    for _, source in ipairs(sources) do
+        for _, entry in ipairs(source or {}) do
+            if type(entry) == "table" and entry.name == name then
+                return entry
+            end
+        end
+    end
+end
+
+local rarityOrder = {
+    limited = 0, exclusive = 1, ["world class"] = 2,
+    mythical = 3, mythic = 3, legendary = 4,
+    epic = 5, rare = 6, uncommon = 7, common = 8, unknown = 9
+}
+local rarityColors = {
+    limited = "#FF8B45", exclusive = "#FF6BCE",
+    mythical = "#D58BFF", mythic = "#D58BFF", legendary = "#FFCE63",
+    epic = "#C18CFF", rare = "#65B9FF", uncommon = "#70D6A3",
+    common = "#C5C8D0", unknown = "#AEB2BE"
+}
+
+local function normalizeRarity(value)
+    if type(value) ~= "string" then return nil end
+    local normalized = string.lower(value):gsub("[%s_%-]+", " ")
+        :gsub("^%s+", ""):gsub("%s+$", "")
+    if normalized == "worldclass" then normalized = "world class" end
+    return normalized
+end
+
+local function entryRarity(entry)
+    if not entry then return "Unknown" end
+    local limited = entry.limited == true or entry.Limited == true
+        or entry.isLimited == true or entry.IsLimited == true
+    if limited then return "Limited" end
+
+    -- FlowData builds have used several names for the rarity field.
+    local rarity = entry.rarity or entry.Rarity or entry.tier or entry.Tier
+        or entry.rarityName or entry.RarityName or entry.rank or entry.Rank
+        or entry.grade or entry.Grade or entry.rarityType or entry.RarityType
+
+    if type(rarity) == "string" and rarity ~= "" then
+        local normalized = normalizeRarity(rarity)
+        if normalized == "world class" then return "World Class" end
+        return rarity
+    end
+
+    -- Some catalogues expose World Class as the entry name itself.
+    if type(entry.name) == "string"
+        and normalizeRarity(entry.name) == "world class" then
+        return "World Class"
+    end
+    return "Unknown"
+end
+
+local function sortByRarity(options, key)
+    table.sort(options, function(a, b)
+        local ra = normalizeRarity(entryRarity(findFlowEntry(a, key))) or "unknown"
+        local rb = normalizeRarity(entryRarity(findFlowEntry(b, key))) or "unknown"
+        local oa, ob = rarityOrder[ra] or rarityOrder.unknown, rarityOrder[rb] or rarityOrder.unknown
+        if oa ~= ob then return oa < ob end
+        return string.lower(a) < string.lower(b)
+    end)
+end
+
+local function richOptionText(name, key)
+    local safeName = tostring(name):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    if key ~= "ModifierTechnique" and key ~= "ModifierAura"
+        and key ~= "ModifierColor" and key ~= "ModifierActivation" then
+        return safeName
+    end
+
+    local rarity = entryRarity(findFlowEntry(name, key))
+    if rarity == "World Class" then
+        -- RichText has no inline UIGradient support, so color each character
+        -- across a yellow -> pink -> blue sweep to create a smooth-looking gradient.
+        local gradient = {
+            {255, 244, 166}, -- light yellow
+            {255, 190, 218}, -- light pink
+            {174, 218, 255}  -- light blue
+        }
+        local text = "[World Class]"
+        local pieces = {}
+        local segments = #text - 1
+        for i = 1, #text do
+            local t = (i - 1) / segments
+            local left, right, localT
+            if t <= 0.5 then
+                left, right, localT = gradient[1], gradient[2], t * 2
+            else
+                left, right, localT = gradient[2], gradient[3], (t - 0.5) * 2
+            end
+            local r = math.floor(left[1] + (right[1] - left[1]) * localT)
+            local g = math.floor(left[2] + (right[2] - left[2]) * localT)
+            local b = math.floor(left[3] + (right[3] - left[3]) * localT)
+            local char = text:sub(i, i):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+            table.insert(pieces, string.format(
+                '<font color="#%02X%02X%02X">%s</font>', r, g, b, char
+            ))
+        end
+        return safeName .. " " .. table.concat(pieces)
+    end
+
+    local color = rarityColors[normalizeRarity(rarity) or "unknown"] or rarityColors.unknown
+    return safeName .. ' <font color="' .. color .. '">[' .. rarity .. ']</font>'
+end
+
+sortByRarity(Techniques, "ModifierTechnique")
+sortByRarity(Auras, "ModifierAura")
+sortByRarity(Colors, "ModifierColor")
+sortByRarity(Activations, "ModifierActivation")
 
 local function validate(key, options)
     if not table.find(options, Selected[key]) then
@@ -354,7 +507,6 @@ if old then
     old:Destroy()
 end
 
-
 local Gui = create("ScreenGui", {
     Name = "CharacterCreator",
     ResetOnSpawn = false,
@@ -363,12 +515,12 @@ local Gui = create("ScreenGui", {
     ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 }, PlayerGui)
 
-
 local Main = create("Frame", {
     Name = "Main",
-    Size = UDim2.fromOffset(620, 530),
+    Size = UDim2.fromOffset(680, 500),
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.fromScale(0.5, 0.5),
+    Visible = false,
     BackgroundColor3 = Theme.Background,
     BorderSizePixel = 0,
     ClipsDescendants = true,
@@ -376,7 +528,7 @@ local Main = create("Frame", {
 }, Gui)
 
 round(Main, 11)
-
+stroke(Main, Theme.Border, 0.2)
 
 local Header = create("Frame", {
     Size = UDim2.new(1, 0, 0, 48),
@@ -410,7 +562,7 @@ create("TextLabel", {
 local GameModeButton = create("TextButton", {
     Name = "GameModeButton",
     Size = UDim2.fromOffset(82, 25),
-    Position = UDim2.new(1, -164, 0, 11),
+    Position = UDim2.new(1, -98, 0, 11),
     BackgroundColor3 = Theme.Input,
     Text = Selected.GameMode,
     TextColor3 = Theme.Text,
@@ -435,36 +587,6 @@ GameModeButton.MouseButton1Click:Connect(function()
     refreshGameModeButton()
 end)
 
-local MinimizeButton = create("TextButton", {
-    Size = UDim2.fromOffset(27, 27),
-    Position = UDim2.new(1, -72, 0, 10),
-    BackgroundColor3 = Theme.Input,
-    Text = "−",
-    TextColor3 = Theme.Muted,
-    Font = Enum.Font.Gotham,
-    TextSize = 19,
-    BorderSizePixel = 0
-}, Header)
-
-round(MinimizeButton, 7)
-
-local CloseButton = create("TextButton", {
-    Size = UDim2.fromOffset(27, 27),
-    Position = UDim2.new(1, -38, 0, 10),
-    BackgroundColor3 = Theme.Input,
-    Text = "×",
-    TextColor3 = Theme.Muted,
-    Font = Enum.Font.Gotham,
-    TextSize = 18,
-    BorderSizePixel = 0
-}, Header)
-
-round(CloseButton, 7)
-
-local dragging = false
-local dragStart
-local startPosition
-
 local function pointInside(guiObject, point)
     local position = guiObject.AbsolutePosition
     local size = guiObject.AbsoluteSize
@@ -474,44 +596,6 @@ local function pointInside(guiObject, point)
         and point.Y >= position.Y
         and point.Y <= position.Y + size.Y
 end
-
-Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-
-        if pointInside(MinimizeButton, input.Position)
-            or pointInside(CloseButton, input.Position) then
-            return
-        end
-
-        dragging = true
-        dragStart = input.Position
-        startPosition = Main.Position
-    end
-end)
-
-UIS.InputChanged:Connect(function(input)
-    if dragging and (
-        input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch
-    ) then
-        local delta = input.Position - dragStart
-
-        Main.Position = UDim2.new(
-            startPosition.X.Scale,
-            startPosition.X.Offset + delta.X,
-            startPosition.Y.Scale,
-            startPosition.Y.Offset + delta.Y
-        )
-    end
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
 
 local Footer = create("Frame", {
     Position = UDim2.new(0, 0, 1, -43),
@@ -546,7 +630,7 @@ local SaveButton = create("TextButton", {
 round(SaveButton, 6)
 
 local TabBar = create("Frame", {
-    Position = UDim2.fromOffset(0, 48),
+    Position = UDim2.fromOffset(0, 88),
     Size = UDim2.new(1, 0, 0, 40),
     BackgroundColor3 = Theme.Header,
     BorderSizePixel = 0
@@ -565,8 +649,8 @@ create("UIListLayout", {
 }, TabBar)
 
 local Content = create("Frame", {
-    Position = UDim2.fromOffset(0, 88),
-    Size = UDim2.new(1, 0, 1, -131),
+    Position = UDim2.fromOffset(128, 128),
+    Size = UDim2.new(1, 0, 1, -171),
     BackgroundTransparency = 1,
     BorderSizePixel = 0
 }, Main)
@@ -580,7 +664,6 @@ local function closeDropdown()
         ActivePopup = nil
     end
 end
-
 
 local function makeTab(name)
     local button = create("TextButton", {
@@ -746,7 +829,8 @@ local function dropdown(parent, title, options, key, onChanged)
         Position = UDim2.fromOffset(10, 0),
         Size = UDim2.new(1, -20, 1, 0),
         BackgroundTransparency = 1,
-        Text = tostring(Selected[key]),
+        Text = richOptionText(tostring(Selected[key]), key),
+        RichText = true,
         TextColor3 = Theme.Text,
         Font = Enum.Font.Gotham,
         TextSize = 10,
@@ -813,7 +897,8 @@ local function dropdown(parent, title, options, key, onChanged)
                     and Theme.AccentDark
                     or Theme.Section,
                 BorderSizePixel = 0,
-                Text = option,
+                Text = richOptionText(option, key),
+                RichText = true,
                 TextColor3 = Theme.Text,
                 Font = Enum.Font.Gotham,
                 TextSize = 10,
@@ -827,7 +912,7 @@ local function dropdown(parent, title, options, key, onChanged)
 
             optionButton.MouseButton1Click:Connect(function()
                 Selected[key] = option
-                valueLabel.Text = option
+                valueLabel.Text = richOptionText(option, key)
 
                 closeDropdown()
 
@@ -903,174 +988,135 @@ local function toggle(parent, title, key, description)
     return button
 end
 
-local function verticalSlider(
-    parent,
-    title,
-    minValue,
-    maxValue,
-    initial,
-    callback,
-    formatter
-)
+local function horizontalSlider(parent, title, minValue, maxValue, initial, callback, formatter)
     formatter = formatter or tostring
 
     local holder = create("Frame", {
-        Size = UDim2.fromOffset(112, 225),
+        Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Theme.Section,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 32
     }, parent)
 
-    round(holder, 9)
+    round(holder, 8)
+    stroke(holder, Theme.Border, 0.65)
 
     create("TextLabel", {
-        Position = UDim2.fromOffset(5, 10),
-        Size = UDim2.new(1, -10, 0, 17),
+        Position = UDim2.fromOffset(12, 8),
+        Size = UDim2.new(1, -90, 0, 17),
         BackgroundTransparency = 1,
         Text = title,
-        TextColor3 = Theme.Text,
+        TextColor3 = Theme.Muted,
         Font = Enum.Font.GothamSemibold,
-        TextSize = 10,
-        TextXAlignment = Enum.TextXAlignment.Center
+        TextSize = 9,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 33
     }, holder)
 
     local valueLabel = create("TextLabel", {
-        Position = UDim2.fromOffset(5, 30),
-        Size = UDim2.new(1, -10, 0, 23),
+        Position = UDim2.new(1, -78, 0, 5),
+        Size = UDim2.fromOffset(66, 22),
         BackgroundTransparency = 1,
         Text = formatter(initial),
         TextColor3 = Theme.AccentLight,
         Font = Enum.Font.GothamBold,
-        TextSize = 15,
-        TextXAlignment = Enum.TextXAlignment.Center
+        TextSize = 14,
+        TextXAlignment = Enum.TextXAlignment.Right,
+        ZIndex = 33
     }, holder)
 
     local track = create("Frame", {
-        Position = UDim2.new(0.5, -1, 0, 68),
-        Size = UDim2.fromOffset(2, 116),
+        Position = UDim2.new(0, 13, 0, 43),
+        Size = UDim2.new(1, -26, 0, 4),
         BackgroundColor3 = Theme.Input,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 33
     }, holder)
-
-    round(track, 3)
+    round(track, 4)
 
     local fill = create("Frame", {
-        AnchorPoint = Vector2.new(0.5, 1),
-        Position = UDim2.new(0.5, 0, 1, 0),
-        Size = UDim2.new(1, 0, 0, 0),
+        Size = UDim2.new(0, 0, 1, 0),
         BackgroundColor3 = Theme.Accent,
-        BorderSizePixel = 0
+        BorderSizePixel = 0,
+        ZIndex = 34
     }, track)
-
-    round(fill, 3)
+    round(fill, 4)
 
     local knob = create("Frame", {
-        Size = UDim2.fromOffset(14, 14),
+        Size = UDim2.fromOffset(13, 13),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 1, 0),
+        Position = UDim2.new(0, 0, 0.5, 0),
         BackgroundColor3 = Theme.Text,
         BorderSizePixel = 0,
-        ZIndex = 5
+        ZIndex = 36
     }, track)
-
     round(knob, 20)
-    stroke(knob, Theme.AccentDark, 0.35)
+    stroke(knob, Theme.AccentDark, 0.25)
 
     local hitbox = create("TextButton", {
-        Position = UDim2.new(0.5, -20, 0, -9),
-        Size = UDim2.new(0, 40, 1, 18),
+        Position = UDim2.new(0, -4, 0, -10),
+        Size = UDim2.new(1, 8, 0, 24),
         BackgroundTransparency = 1,
         Text = "",
-        ZIndex = 6
+        ZIndex = 37
     }, track)
 
-    local draggingSlider = false
-
+    local dragging = false
     local function setValue(value)
-        value = math.clamp(
-            math.floor(value + 0.5),
-            minValue,
-            maxValue
-        )
-
-        local alpha = (value - minValue) / (maxValue - minValue)
-        local inverted = 1 - alpha
-
-        knob.Position = UDim2.new(0.5, 0, inverted, 0)
-        fill.Size = UDim2.new(1, 0, alpha, 0)
-
+        value = math.clamp(math.floor(value + 0.5), minValue, maxValue)
+        local alpha = (value - minValue) / math.max(1, maxValue - minValue)
+        knob.Position = UDim2.new(alpha, 0, 0.5, 0)
+        fill.Size = UDim2.new(alpha, 0, 1, 0)
         valueLabel.Text = formatter(value)
-
-        if callback then
-            callback(value)
-        end
+        if callback then callback(value) end
     end
 
     local function updateFromInput(input)
-        local trackHeight = track.AbsoluteSize.Y
-
-        if trackHeight <= 0 then
-            return
-        end
-
-        local alpha = math.clamp(
-            1 - (
-                (input.Position.Y - track.AbsolutePosition.Y)
-                / trackHeight
-            ),
-            0,
-            1
-        )
-
+        local alpha = math.clamp((input.Position.X - track.AbsolutePosition.X) / math.max(1, track.AbsoluteSize.X), 0, 1)
         setValue(minValue + alpha * (maxValue - minValue))
     end
 
     hitbox.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-
-            draggingSlider = true
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
             updateFromInput(input)
         end
     end)
 
     UIS.InputChanged:Connect(function(input)
-        if draggingSlider and (
-            input.UserInputType == Enum.UserInputType.MouseMovement
-            or input.UserInputType == Enum.UserInputType.Touch
-        ) then
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             updateFromInput(input)
         end
     end)
 
     UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1
-            or input.UserInputType == Enum.UserInputType.Touch then
-            draggingSlider = false
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
         end
     end)
 
     create("TextLabel", {
-        Position = UDim2.fromOffset(5, 191),
-        Size = UDim2.new(1, -10, 0, 13),
+        Position = UDim2.fromOffset(12, 55),
+        Size = UDim2.new(1, -24, 0, 12),
         BackgroundTransparency = 1,
-        Text = formatter(minValue) .. "  —  " .. formatter(maxValue),
+        Text = formatter(minValue) .. "     —     " .. formatter(maxValue),
         TextColor3 = Theme.Subtle,
         Font = Enum.Font.Gotham,
         TextSize = 8,
-        TextXAlignment = Enum.TextXAlignment.Center
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ZIndex = 33
     }, holder)
 
     setValue(initial)
-
-    return holder
+    return holder, setValue, function() return dragging end
 end
 
 local LeftDock = create("Frame", {
     Name = "LeftDock",
-    Size = UDim2.fromOffset(38, 121),
+    Size = UDim2.fromOffset(250, 36),
     BackgroundColor3 = Theme.Header,
     BorderSizePixel = 0,
-    ZIndex = 20
+    ZIndex = 40
 }, Gui)
 
 round(LeftDock, 8)
@@ -1079,14 +1125,14 @@ stroke(LeftDock, Theme.Border, 0.3)
 local function dockButton(parent, text, position)
     local button = create("TextButton", {
         Position = position,
-        Size = UDim2.fromOffset(30, 31),
+        Size = UDim2.fromOffset(74, 28),
         BackgroundColor3 = Theme.Input,
         BorderSizePixel = 0,
         Text = text,
         TextColor3 = Theme.Muted,
         Font = Enum.Font.GothamSemibold,
         TextSize = 8,
-        ZIndex = 21
+        ZIndex = 41
     }, parent)
 
     round(button, 6)
@@ -1096,70 +1142,66 @@ end
 
 local HeightDockButton = dockButton(
     LeftDock,
-    "H",
-    UDim2.fromOffset(4, 6)
+    "HEIGHT",
+    UDim2.fromOffset(5, 4)
 )
 
 local EgoDockButton = dockButton(
     LeftDock,
-    "E",
-    UDim2.fromOffset(4, 45)
+    "EGO",
+    UDim2.fromOffset(88, 4)
 )
 
 local BondDockButton = dockButton(
     LeftDock,
-    "B",
-    UDim2.fromOffset(4, 84)
+    "BONDS",
+    UDim2.fromOffset(171, 4)
 )
-
---// LEFT POPUP
 
 local LeftPopup = create("Frame", {
     Name = "AttributePopup",
-    Size = UDim2.fromOffset(145, 285),
+    Size = UDim2.fromOffset(500, 86),
     BackgroundColor3 = Theme.Background,
     BorderSizePixel = 0,
     Visible = false,
-    ZIndex = 30
+    ZIndex = 45
 }, Gui)
 
 round(LeftPopup, 10)
 stroke(LeftPopup, Theme.Border, 0.2)
 
 local LeftPopupTitle = create("TextLabel", {
-    Position = UDim2.fromOffset(10, 10),
-    Size = UDim2.new(1, -20, 0, 20),
+    Position = UDim2.fromOffset(12, 5),
+    Size = UDim2.new(1, -24, 0, 15),
     BackgroundTransparency = 1,
     Text = "HEIGHT",
     TextColor3 = Theme.Text,
     Font = Enum.Font.GothamSemibold,
     TextSize = 10,
     TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 31
+    ZIndex = 46
 }, LeftPopup)
 
 local LeftPopupSubtitle = create("TextLabel", {
-    Position = UDim2.fromOffset(10, 30),
-    Size = UDim2.new(1, -20, 0, 14),
+    Position = UDim2.fromOffset(12, 20),
+    Size = UDim2.new(1, -24, 0, 11),
     BackgroundTransparency = 1,
     Text = "Character appearance",
     TextColor3 = Theme.Subtle,
     Font = Enum.Font.Gotham,
     TextSize = 8,
     TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 31
+    ZIndex = 46
 }, LeftPopup)
 
 local SliderContainer = create("Frame", {
-    Position = UDim2.fromOffset(16, 48),
-    Size = UDim2.new(1, -32, 1, -58),
+    Position = UDim2.fromOffset(12, 34),
+    Size = UDim2.new(1, -24, 1, -40),
     BackgroundTransparency = 1,
-    ZIndex = 31
+    ZIndex = 46
 }, LeftPopup)
 
---// HEIGHT SLIDER
-
-local HeightSlider = verticalSlider(
+local HeightSlider = horizontalSlider(
     SliderContainer,
     "HEIGHT",
     MIN_HEIGHT,
@@ -1171,12 +1213,9 @@ local HeightSlider = verticalSlider(
     heightText
 )
 
-HeightSlider.AnchorPoint = Vector2.new(0.5, 0)
-HeightSlider.Position = UDim2.new(0.5, 0, 0, 0)
+HeightSlider.Position = UDim2.new(0, 0, 0, 0)
 
---// EGO SLIDER
-
-local EgoSlider = verticalSlider(
+local EgoSlider = horizontalSlider(
     SliderContainer,
     "EGO",
     0,
@@ -1188,27 +1227,23 @@ local EgoSlider = verticalSlider(
     end
 )
 
-EgoSlider.AnchorPoint = Vector2.new(0.5, 0)
-EgoSlider.Position = UDim2.new(0.5, 0, 0, 0)
+EgoSlider.Position = UDim2.new(0, 0, 0, 0)
 EgoSlider.Visible = false
-
---// BONDS CONTROLS
---// One option only: Auto Max All ON/OFF
 
 local BondControls = create("Frame", {
     Name = "BondControls",
-    Position = UDim2.fromOffset(10, 48),
-    Size = UDim2.new(1, -20, 1, -58),
+    Position = UDim2.fromOffset(12, 34),
+    Size = UDim2.new(1, -24, 1, -40),
     BackgroundTransparency = 1,
     Visible = false,
-    ZIndex = 31
+    ZIndex = 46
 }, LeftPopup)
 
 local AutoBondRow = create("Frame", {
-    Size = UDim2.new(1, 0, 0, 46),
+    Size = UDim2.new(1, 0, 1, 0),
     BackgroundColor3 = Theme.Section,
     BorderSizePixel = 0,
-    ZIndex = 32
+    ZIndex = 47
 }, BondControls)
 
 round(AutoBondRow, 6)
@@ -1222,7 +1257,7 @@ create("TextLabel", {
     Font = Enum.Font.GothamSemibold,
     TextSize = 9,
     TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 33
+    ZIndex = 48
 }, AutoBondRow)
 
 create("TextLabel", {
@@ -1234,7 +1269,7 @@ create("TextLabel", {
     Font = Enum.Font.Gotham,
     TextSize = 7,
     TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 33
+    ZIndex = 48
 }, AutoBondRow)
 
 local AutoBondButton = create("TextButton", {
@@ -1246,7 +1281,7 @@ local AutoBondButton = create("TextButton", {
     TextColor3 = Theme.Text,
     Font = Enum.Font.GothamSemibold,
     TextSize = 8,
-    ZIndex = 33
+    ZIndex = 48
 }, AutoBondRow)
 
 round(AutoBondButton, 5)
@@ -1265,8 +1300,7 @@ end)
 
 updateAutoBondButton()
 
---// ATTRIBUTE POPUP SWITCHING
-
+local updatePositions
 local activeAttribute = nil
 
 local function resetAttributeButtons()
@@ -1279,6 +1313,7 @@ local function closeAttributePopup()
     activeAttribute = nil
     LeftPopup.Visible = false
     resetAttributeButtons()
+    if updatePositions then updatePositions() end
 end
 
 local function showAttribute(attribute)
@@ -1294,9 +1329,7 @@ local function showAttribute(attribute)
     EgoSlider.Visible = attribute == "EGO"
     BondControls.Visible = attribute == "BONDS"
 
-    LeftPopup.Size = attribute == "BONDS"
-        and UDim2.fromOffset(145, 155)
-        or UDim2.fromOffset(145, 285)
+    LeftPopup.Size = UDim2.fromOffset(500, 112)
 
     LeftPopupTitle.Text = attribute
 
@@ -1317,6 +1350,8 @@ local function showAttribute(attribute)
     elseif attribute == "BONDS" then
         BondDockButton.BackgroundColor3 = Theme.AccentDark
     end
+
+    if updatePositions then updatePositions() end
 end
 
 HeightDockButton.MouseButton1Click:Connect(function()
@@ -1331,7 +1366,114 @@ BondDockButton.MouseButton1Click:Connect(function()
     showAttribute("BONDS")
 end)
 
---// RIGHT DOCK
+local StaminaEnv = (getgenv and getgenv()) or _G
+StaminaEnv.InfiniteStamina = true
+
+if StaminaEnv.InfStaminaState then
+    StaminaEnv.InfStaminaState.running = false
+end
+
+local InfStaminaState = {
+    running = true,
+    staminaTables = setmetatable({}, {__mode = "k"}),
+    originalSpend = {}
+}
+
+StaminaEnv.InfStaminaState = InfStaminaState
+
+local function findStaminas()
+    if not getgc then return end
+
+    local ok, objects = pcall(getgc, true)
+    if not ok or type(objects) ~= "table" then return end
+
+    for _, t in ipairs(objects) do
+        if type(t) == "table" and not InfStaminaState.staminaTables[t] then
+            local valid = pcall(function()
+                return type(rawget(t, "spend")) == "function"
+                    and type(rawget(t, "value")) == "number"
+                    and type(rawget(t, "max")) == "number"
+            end)
+
+            if valid then
+                local original = rawget(t, "spend")
+
+                if type(original) == "function" then
+                    InfStaminaState.staminaTables[t] = true
+                    InfStaminaState.originalSpend[t] = original
+
+                    t.spend = function(...)
+                        if StaminaEnv.InfiniteStamina then
+                            return
+                        end
+
+                        return original(...)
+                    end
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    findStaminas()
+
+    local nextScan = os.clock() + 3
+    local nextRefill = 0
+
+    while InfStaminaState.running do
+        if StaminaEnv.InfiniteStamina then
+            if os.clock() >= nextRefill then
+                for t in pairs(InfStaminaState.staminaTables) do
+                    pcall(function()
+                        t.value = t.max
+                    end)
+                end
+
+                nextRefill = os.clock() + 0.2
+            end
+
+            if os.clock() >= nextScan then
+                findStaminas()
+                nextScan = os.clock() + 3
+            end
+        end
+
+        task.wait(0.05)
+    end
+end)
+
+local MatchEngine = ReplicatedStorage:WaitForChild("MatchEngine")
+local MatchSim = require(MatchEngine:WaitForChild("MatchSim"))
+StaminaEnv.Unstealable = false
+
+if type(MatchSim.resolveTackle) == "function" then
+    if type(StaminaEnv.OriginalResolveTackle) ~= "function" then
+        StaminaEnv.OriginalResolveTackle = MatchSim.resolveTackle
+    end
+
+    MatchSim.resolveTackle = function(self, tackler, victim, ...)
+        if StaminaEnv.Unstealable
+            and victim
+            and victim.controlled
+            and tackler
+            and not tackler.controlled then
+
+            if tackler.keeper then
+                return false
+            end
+
+            if victim.ai then
+                victim.ai.immuneUntil = math.max(
+                    victim.ai.immuneUntil or 0,
+                    self.clock + 0.5
+                )
+            end
+        end
+
+        return StaminaEnv.OriginalResolveTackle(self, tackler, victim, ...)
+    end
+end
 
 local RightDock = create("Frame", {
     Name = "RightDock",
@@ -1358,7 +1500,6 @@ local CodesDockButton = create("TextButton", {
 
 round(CodesDockButton, 6)
 
-
 local SlotsDockButton = create("TextButton", {
     Name = "SlotsDockButton",
     Position = UDim2.fromOffset(4, 44),
@@ -1374,10 +1515,599 @@ local SlotsDockButton = create("TextButton", {
 
 round(SlotsDockButton, 6)
 
---// CODES POPUP
+local StaminaToggle
+
+local slotsOpen = false
+local codesOpen = false
+local setMinimized
+
+local matchConfigOpen = false
+local characterModifierOpen = false
+local BottomBar = create("Frame", {
+    Name = "BottomBar",
+    AnchorPoint = Vector2.new(0.5, 0),
+    Position = UDim2.new(0.5, 0, 0, 10),
+    Size = UDim2.fromOffset(640, 44),
+    BackgroundColor3 = Theme.Header,
+    BorderSizePixel = 0,
+    ZIndex = 50
+}, Gui)
+
+round(BottomBar, 9)
+stroke(BottomBar, Theme.Border, 0.25)
+
+-- Auto-hide the HUD unless the mouse is near the top edge.
+local HUD_SHOW_ZONE = 85
+local HUD_HIDE_ZONE = 105
+local HUD_TWEEN_INFO = TweenInfo.new(0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local hudShown = true
+local hudTween
+local bottomBarShownPosition = UDim2.new(0.5, 0, 0, 10)
+
+local function updateBottomBarPosition(instant)
+    local target = hudShown
+        and bottomBarShownPosition
+        or UDim2.new(0.5, 0, 0, -(BottomBar.AbsoluteSize.Y + 12))
+
+    if hudTween then
+        hudTween:Cancel()
+        hudTween = nil
+    end
+
+    if instant then
+        BottomBar.Position = target
+    else
+        hudTween = TweenService:Create(BottomBar, HUD_TWEEN_INFO, { Position = target })
+        hudTween:Play()
+    end
+end
+
+local function setHudShown(visible, instant)
+    if hudShown == visible and not instant then
+        return
+    end
+    hudShown = visible
+    updateBottomBarPosition(instant)
+end
+
+local function updateHudFromMouse()
+    local camera = workspace.CurrentCamera
+    if not camera then
+        return
+    end
+
+    local mouseY = UIS:GetMouseLocation().Y
+
+    if not hudShown and mouseY <= HUD_SHOW_ZONE then
+        setHudShown(true, false)
+    elseif hudShown and mouseY > HUD_HIDE_ZONE then
+        setHudShown(false, false)
+    end
+end
+
+UIS.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        updateHudFromMouse()
+    end
+end)
+
+local function makeHudButton(name, caption, x)
+    local button = create("TextButton", {
+        Name = name,
+        Position = UDim2.fromOffset(x, 5),
+        Size = UDim2.fromOffset(150, 34),
+        BackgroundColor3 = Theme.Input,
+        BorderSizePixel = 0,
+        Text = caption,
+        TextColor3 = Theme.Text,
+        Font = Enum.Font.GothamSemibold,
+        TextSize = 9,
+        AutoButtonColor = false,
+        ZIndex = 51
+    }, BottomBar)
+    round(button, 7)
+    return button
+end
+
+local CodesHudButton = makeHudButton("CodesHudButton", "CLAIM CODES", 5)
+local CharacterCreatorDockButton = makeHudButton(
+    "CharacterCreatorDockButton", "CHARACTER CREATOR", 325
+)
+local MatchConfigButton = makeHudButton("MatchConfigButton", "MATCH CONFIGS", 485)
+local SlotFarmHudButton = makeHudButton("SlotFarmHudButton", "SLOT FARM", 645)
+local CharacterModifierHudButton = makeHudButton(
+    "CharacterModifierHudButton", "CHARACTER MODIFIER", 165
+)
+
+-- Character Modifier selections are independent from Character Creator selections.
+Selected.ModifierTechnique = Selected.Technique
+Selected.ModifierAura = Selected.Aura
+Selected.ModifierColor = Selected.Color
+Selected.ModifierActivation = Selected.Activation
+
+local CharacterModifierPopup = create("Frame", {
+    Name = "CharacterModifierPopup",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.fromScale(0.5, 0.5),
+    Size = UDim2.fromOffset(300, 390),
+    BackgroundColor3 = Theme.Background,
+    BorderSizePixel = 0,
+    Visible = false,
+    ZIndex = 70
+}, Gui)
+round(CharacterModifierPopup, 10)
+stroke(CharacterModifierPopup, Theme.Border, 0.2)
+
+create("TextLabel", {
+    Position = UDim2.fromOffset(14, 10),
+    Size = UDim2.new(1, -28, 0, 22),
+    BackgroundTransparency = 1,
+    Text = "Character Modifier",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 13,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 71
+}, CharacterModifierPopup)
+
+create("TextLabel", {
+    Position = UDim2.fromOffset(14, 34),
+    Size = UDim2.new(1, -28, 0, 25),
+    BackgroundTransparency = 1,
+    Text = "Apply each change separately to the active slot.",
+    TextColor3 = Theme.Muted,
+    Font = Enum.Font.Gotham,
+    TextSize = 9,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 71
+}, CharacterModifierPopup)
+
+local ModifierBody = create("ScrollingFrame", {
+    Position = UDim2.fromOffset(13, 65),
+    Size = UDim2.new(1, -26, 1, -78),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    ScrollBarThickness = 3,
+    ScrollBarImageColor3 = Theme.Subtle,
+    CanvasSize = UDim2.new(),
+    AutomaticCanvasSize = Enum.AutomaticSize.Y,
+    ZIndex = 71
+}, CharacterModifierPopup)
+
+create("UIListLayout", {
+    Padding = UDim.new(0, 8),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, ModifierBody)
+
+local ModifierStatus = create("TextLabel", {
+    Size = UDim2.new(1, -3, 0, 28),
+    BackgroundTransparency = 1,
+    Text = "Ready",
+    TextColor3 = Theme.Muted,
+    Font = Enum.Font.Gotham,
+    TextSize = 9,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextWrapped = true,
+    LayoutOrder = 10
+}, ModifierBody)
+
+local function modifierActionButton(parent, caption)
+    local button = create("TextButton", {
+        Size = UDim2.new(1, 0, 0, 31),
+        BackgroundColor3 = Theme.AccentDark,
+        BorderSizePixel = 0,
+        Text = caption,
+        TextColor3 = Theme.Text,
+        Font = Enum.Font.GothamSemibold,
+        TextSize = 10,
+        AutoButtonColor = true,
+        ZIndex = 72
+    }, parent)
+    round(button, 6)
+    return button
+end
+
+local ModifierEgoSection = section(
+    ModifierBody,
+    "Ego",
+    "Adjust the Ego value on the active slot"
+)
+Selected.ModifierEgo = 0
+local ModifierEgoSlider, setModifierEgoSliderValue, isModifierEgoSliderDragging = horizontalSlider(
+    ModifierEgoSection,
+    "CURRENT SLOT EGO",
+    0,
+    300,
+    Selected.ModifierEgo,
+    function(value)
+        Selected.ModifierEgo = value
+    end
+)
+ModifierEgoSlider.Size = UDim2.new(1, 0, 0, 74)
+local ModifierApplyEgoButton = modifierActionButton(
+    ModifierEgoSection, "Apply Ego"
+)
+
+local ModifierHeightSection = section(
+    ModifierBody,
+    "Height",
+    "Change the height on the active slot (63–78 inches)"
+)
+Selected.ModifierHeight = MIN_HEIGHT
+local ModifierHeightSlider, setModifierHeightSliderValue, isModifierHeightSliderDragging = horizontalSlider(
+    ModifierHeightSection,
+    "CURRENT SLOT HEIGHT",
+    MIN_HEIGHT,
+    MAX_HEIGHT,
+    Selected.ModifierHeight,
+    function(value)
+        Selected.ModifierHeight = value
+    end,
+    heightText
+)
+ModifierHeightSlider.Size = UDim2.new(1, 0, 0, 74)
+local ModifierApplyHeightButton = modifierActionButton(
+    ModifierHeightSection, "Apply Height"
+)
+
+local ModifierFootSection = section(
+    ModifierBody,
+    "Dominant Foot",
+    "Change the dominant foot on the active slot"
+)
+Selected.ModifierFoot = "Left"
+local ModifierFootLabel = dropdown(
+    ModifierFootSection,
+    "CURRENT DOMINANT FOOT",
+    {"Left", "Right"},
+    "ModifierFoot"
+)
+local ModifierApplyFootButton = modifierActionButton(
+    ModifierFootSection, "Apply Dominant Foot"
+)
+
+local ModifierSkillSection = section(
+    ModifierBody,
+    "Skill Points",
+    "Adds exactly 110 points; does not replace your total"
+)
+local ModifierAddPointsButton = modifierActionButton(
+    ModifierSkillSection, "Add +110 Skill Points"
+)
+
+local ModifierTechniqueSection = section(
+    ModifierBody,
+    "Technique",
+    "Choose from the game's technique list"
+)
+dropdown(ModifierTechniqueSection, "Technique", Techniques, "ModifierTechnique")
+local ModifierTechniqueButton = modifierActionButton(
+    ModifierTechniqueSection, "Apply Technique"
+)
+
+local ModifierAuraSection = section(
+    ModifierBody,
+    "Aura / Flow",
+    "Choose from the game's aura and flow list"
+)
+dropdown(ModifierAuraSection, "Aura", Auras, "ModifierAura")
+local ModifierAuraButton = modifierActionButton(
+    ModifierAuraSection, "Apply Aura"
+)
+
+local ModifierColorSection = section(
+    ModifierBody,
+    "Flow Color",
+    "Includes every color exposed by FlowData"
+)
+dropdown(ModifierColorSection, "Color", Colors, "ModifierColor")
+local ModifierColorButton = modifierActionButton(
+    ModifierColorSection, "Apply Color"
+)
+
+local ModifierActivationSection = section(
+    ModifierBody,
+    "Flow Activation",
+    "Choose the activation effect for your flow"
+)
+dropdown(ModifierActivationSection, "Activation", Activations, "ModifierActivation")
+local ModifierActivationButton = modifierActionButton(
+    ModifierActivationSection, "Apply Activation"
+)
+
+local function saveModifierChange(changeName, mutate)
+    ModifierStatus.Text = "Updating " .. changeName .. "..."
+    ModifierStatus.TextColor3 = Theme.Muted
+    local ok, result, detail = pcall(function()
+        local activeState = require(
+            Player:WaitForChild("PlayerScripts")
+                :WaitForChild("CharacterUi")
+                :WaitForChild("ActiveSlotState")
+        )
+        local slotIndex, slotData = activeState.get()
+        slotIndex = tonumber(slotIndex)
+        assert(slotIndex ~= nil, "Active slot index unavailable")
+        assert(type(slotData) == "table", "Active slot data unavailable")
+        local message = mutate(slotData)
+        if type(activeState.notifyExternalChange) == "function" then
+            activeState.notifyExternalChange()
+        end
+        local response = SaveSlot:InvokeServer(slotIndex, slotData)
+        return response ~= false, message
+    end)
+    if ok and result then
+        ModifierStatus.Text = detail or (changeName .. " save request sent.")
+        ModifierStatus.TextColor3 = Theme.Green
+    elseif ok then
+        ModifierStatus.Text = "Server did not confirm " .. changeName .. "."
+        ModifierStatus.TextColor3 = Theme.Warning
+    else
+        ModifierStatus.Text = changeName .. " failed: " .. tostring(result)
+        ModifierStatus.TextColor3 = Theme.Red
+    end
+end
+
+local function applyFlowField(field, selectedKey, labelText)
+    local value = Selected[selectedKey]
+    if value == nil or value == "" then
+        ModifierStatus.Text = "Choose a " .. labelText .. " first."
+        ModifierStatus.TextColor3 = Theme.Warning
+        return
+    end
+    saveModifierChange(labelText, function(slotData)
+        slotData.flow = type(slotData.flow) == "table" and slotData.flow or {}
+        slotData.flow[field] = value
+        return labelText .. " set to " .. value .. "."
+    end)
+end
+
+local lastLoadedModifierEgo = nil
+local lastLoadedModifierHeight = nil
+local lastLoadedModifierFoot = nil
+local function readModifierSlot()
+    local activeState = require(
+        Player:WaitForChild("PlayerScripts")
+            :WaitForChild("CharacterUi")
+            :WaitForChild("ActiveSlotState")
+    )
+    local _, slotData = activeState.get()
+    assert(type(slotData) == "table", "Active slot data unavailable")
+    local stats = type(slotData.stats) == "table" and slotData.stats or {}
+    return {
+        ego = math.clamp(math.floor(tonumber(stats[15]) or 0), 0, 300),
+        height = heightInchesFromValue(slotData.heightValue),
+        foot = slotData.dominantFoot == "Right" and "Right" or "Left"
+    }
+end
+
+local function loadModifierValues(force)
+    local ok, values = pcall(readModifierSlot)
+    if not ok then
+        ModifierStatus.Text = "Couldn't read current slot values: " .. tostring(values)
+        ModifierStatus.TextColor3 = Theme.Warning
+        return
+    end
+
+    if force or values.ego ~= lastLoadedModifierEgo then
+        if not isModifierEgoSliderDragging() then
+            setModifierEgoSliderValue(values.ego)
+            lastLoadedModifierEgo = values.ego
+        end
+    end
+    if force or values.height ~= lastLoadedModifierHeight then
+        if not isModifierHeightSliderDragging() then
+            setModifierHeightSliderValue(values.height)
+            lastLoadedModifierHeight = values.height
+        end
+    end
+    if force or values.foot ~= lastLoadedModifierFoot then
+        Selected.ModifierFoot = values.foot
+        ModifierFootLabel.Text = richOptionText(values.foot, "ModifierFoot")
+        lastLoadedModifierFoot = values.foot
+    end
+end
+
+ModifierApplyEgoButton.MouseButton1Click:Connect(function()
+    local value = math.clamp(math.floor(tonumber(Selected.ModifierEgo) or 0), 0, 300)
+    saveModifierChange("Ego", function(slotData)
+        slotData.stats = type(slotData.stats) == "table" and slotData.stats or {}
+        local previous = tonumber(slotData.stats[15]) or 0
+        slotData.stats[15] = value
+        return string.format("Ego: %d → %d", previous, value)
+    end)
+end)
+
+ModifierApplyHeightButton.MouseButton1Click:Connect(function()
+    local inches = math.clamp(math.floor(tonumber(Selected.ModifierHeight) or MIN_HEIGHT), MIN_HEIGHT, MAX_HEIGHT)
+    saveModifierChange("Height", function(slotData)
+        local previous = heightInchesFromValue(slotData.heightValue)
+        slotData.heightValue = heightValue(inches)
+        lastLoadedModifierHeight = inches
+        return string.format("Height: %s → %s", heightText(previous), heightText(inches))
+    end)
+end)
+
+ModifierApplyFootButton.MouseButton1Click:Connect(function()
+    local foot = Selected.ModifierFoot == "Right" and "Right" or "Left"
+    saveModifierChange("Dominant foot", function(slotData)
+        local previous = slotData.dominantFoot == "Right" and "Right" or "Left"
+        slotData.dominantFoot = foot
+        lastLoadedModifierFoot = foot
+        return "Dominant foot: " .. previous .. " → " .. foot
+    end)
+end)
+
+ModifierAddPointsButton.MouseButton1Click:Connect(function()
+    saveModifierChange("+110 skill points", function(slotData)
+        local previous = tonumber(slotData.skillPoints) or 0
+        local updated = previous + 110
+        slotData.skillPoints = updated
+        return string.format("Skill points: %d → %d (+110)", previous, updated)
+    end)
+end)
+ModifierTechniqueButton.MouseButton1Click:Connect(function()
+    applyFlowField("technique", "ModifierTechnique", "Technique")
+end)
+ModifierAuraButton.MouseButton1Click:Connect(function()
+    applyFlowField("aura", "ModifierAura", "Aura")
+end)
+ModifierColorButton.MouseButton1Click:Connect(function()
+    applyFlowField("color", "ModifierColor", "Color")
+end)
+ModifierActivationButton.MouseButton1Click:Connect(function()
+    applyFlowField("activation", "ModifierActivation", "Activation")
+end)
+
+local MatchConfigPopup = create("Frame", {
+    Name = "MatchConfigPopup",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 1, -62),
+    Size = UDim2.fromOffset(260, 154),
+    BackgroundColor3 = Theme.Background,
+    BorderSizePixel = 0,
+    Visible = false,
+    ZIndex = 60
+}, Gui)
+
+round(MatchConfigPopup, 9)
+stroke(MatchConfigPopup, Theme.Border, 0.25)
+
+create("TextLabel", {
+    Position = UDim2.fromOffset(15, 11),
+    Size = UDim2.new(1, -30, 0, 20),
+    BackgroundTransparency = 1,
+    Text = "Match Configs",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 12,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 61
+}, MatchConfigPopup)
+
+create("TextLabel", {
+    Position = UDim2.fromOffset(15, 49),
+    Size = UDim2.new(1, -100, 0, 24),
+    BackgroundTransparency = 1,
+    Text = "Infinite Stamina",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.Gotham,
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 61
+}, MatchConfigPopup)
+
+StaminaToggle = create("TextButton", {
+    Name = "InfiniteStaminaToggle",
+    Position = UDim2.new(1, -72, 0, 45),
+    Size = UDim2.fromOffset(56, 30),
+    BackgroundColor3 = Theme.Input,
+    BorderSizePixel = 0,
+    Text = "OFF",
+    TextColor3 = Theme.Muted,
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 10,
+    ZIndex = 62
+}, MatchConfigPopup)
+
+round(StaminaToggle, 6)
+
+create("TextLabel", {
+    Position = UDim2.fromOffset(15, 99),
+    Size = UDim2.new(1, -100, 0, 24),
+    BackgroundTransparency = 1,
+    Text = "Prevent NPC Tackle",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.Gotham,
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 61
+}, MatchConfigPopup)
+
+local PreventTackleToggle = create("TextButton", {
+    Name = "PreventNPCTackleToggle",
+    Position = UDim2.new(1, -72, 0, 95),
+    Size = UDim2.fromOffset(56, 30),
+    BackgroundColor3 = Theme.Input,
+    BorderSizePixel = 0,
+    Text = "OFF",
+    TextColor3 = Theme.Muted,
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 10,
+    ZIndex = 62
+}, MatchConfigPopup)
+
+round(PreventTackleToggle, 6)
+
+local function refreshStaminaButton()
+    local enabled = StaminaEnv.InfiniteStamina == true
+    StaminaToggle.BackgroundColor3 = enabled and Theme.AccentDark or Theme.Input
+    StaminaToggle.Text = enabled and "ON" or "OFF"
+    StaminaToggle.TextColor3 = enabled and Theme.Text or Theme.Muted
+end
+
+local function refreshPreventTackleButton()
+    local enabled = StaminaEnv.Unstealable == true
+    PreventTackleToggle.BackgroundColor3 = enabled and Theme.AccentDark or Theme.Input
+    PreventTackleToggle.Text = enabled and "ON" or "OFF"
+    PreventTackleToggle.TextColor3 = enabled and Theme.Text or Theme.Muted
+end
+
+StaminaToggle.MouseButton1Click:Connect(function()
+    StaminaEnv.InfiniteStamina = not StaminaEnv.InfiniteStamina
+    refreshStaminaButton()
+end)
+
+PreventTackleToggle.MouseButton1Click:Connect(function()
+    StaminaEnv.Unstealable = not StaminaEnv.Unstealable
+    refreshPreventTackleButton()
+end)
+
+MatchConfigButton.MouseButton1Click:Connect(function()
+    matchConfigOpen = not matchConfigOpen
+    MatchConfigPopup.Visible = matchConfigOpen
+    MatchConfigButton.BackgroundColor3 = matchConfigOpen
+        and Theme.AccentDark or Theme.Input
+
+    if updatePositions then
+        updatePositions()
+    end
+end)
+
+CharacterModifierHudButton.MouseButton1Click:Connect(function()
+    characterModifierOpen = not characterModifierOpen
+    CharacterModifierPopup.Visible = characterModifierOpen
+    if characterModifierOpen then
+        loadModifierValues(true)
+    end
+    CharacterModifierHudButton.BackgroundColor3 = characterModifierOpen
+        and Theme.AccentDark or Theme.Input
+
+    if updatePositions then
+        updatePositions()
+    end
+end)
+
+-- Keep the displayed Ego synchronized with the active slot while the modifier is open.
+task.spawn(function()
+    while Gui.Parent do
+        if characterModifierOpen then
+            loadModifierValues(false)
+        end
+        task.wait(0.35)
+    end
+end)
+
+CharacterCreatorDockButton.MouseButton1Click:Connect(function()
+    setMinimized(Main.Visible)
+end)
+
+refreshStaminaButton()
+refreshPreventTackleButton()
 
 local CodesPopup = create("Frame", {
     Name = "CodesPopup",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 1, -62),
     Size = UDim2.fromOffset(250, 365),
     BackgroundColor3 = Theme.Background,
     BorderSizePixel = 0,
@@ -1399,20 +2129,6 @@ create("TextLabel", {
     TextXAlignment = Enum.TextXAlignment.Left,
     ZIndex = 31
 }, CodesPopup)
-
-local CodesClose = create("TextButton", {
-    Position = UDim2.new(1, -29, 0, 8),
-    Size = UDim2.fromOffset(21, 21),
-    BackgroundColor3 = Theme.Input,
-    BorderSizePixel = 0,
-    Text = "×",
-    TextColor3 = Theme.Muted,
-    Font = Enum.Font.Gotham,
-    TextSize = 14,
-    ZIndex = 31
-}, CodesPopup)
-
-round(CodesClose, 5)
 
 local CodeCountLabel = create("TextLabel", {
     Position = UDim2.fromOffset(13, 39),
@@ -1483,11 +2199,11 @@ local CodeResults = create("ScrollingFrame", {
     ZIndex = 31
 }, CodesPopup)
 
---// SLOT FARM POPUP
-
 local SlotsPopup = create("Frame", {
     Name = "SlotsPopup",
-    Size = UDim2.fromOffset(230, 355),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 1, -62),
+    Size = UDim2.fromOffset(260, 430),
     BackgroundColor3 = Theme.Background,
     BorderSizePixel = 0,
     Visible = false,
@@ -1509,32 +2225,6 @@ create("TextLabel", {
     ZIndex = 31
 }, SlotsPopup)
 
-local SlotsClose = create("TextButton", {
-    Position = UDim2.new(1, -29, 0, 8),
-    Size = UDim2.fromOffset(21, 21),
-    BackgroundColor3 = Theme.Input,
-    BorderSizePixel = 0,
-    Text = "×",
-    TextColor3 = Theme.Muted,
-    Font = Enum.Font.Gotham,
-    TextSize = 14,
-    ZIndex = 31
-}, SlotsPopup)
-
-round(SlotsClose, 5)
-
-create("TextLabel", {
-    Position = UDim2.fromOffset(13, 37),
-    Size = UDim2.new(1, -26, 0, 20),
-    BackgroundTransparency = 1,
-    Text = "Choose which save slots the farm can use.",
-    TextColor3 = Theme.Subtle,
-    Font = Enum.Font.Gotham,
-    TextSize = 8,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    ZIndex = 31
-}, SlotsPopup)
-
 local SlotRows = create("Frame", {
     Position = UDim2.fromOffset(12, 64),
     Size = UDim2.new(1, -24, 0, 224),
@@ -1548,6 +2238,78 @@ create("UIGridLayout", {
     FillDirectionMaxCells = 2,
     SortOrder = Enum.SortOrder.LayoutOrder
 }, SlotRows)
+
+local SlotAttemptLabel = create("TextLabel", {
+    Position = UDim2.fromOffset(13, 296),
+    Size = UDim2.new(1, -26, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "Attempts: 0",
+    TextColor3 = Theme.Text,
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 9,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 31
+}, SlotsPopup)
+
+local SlotElapsedLabel = create("TextLabel", {
+    Position = UDim2.fromOffset(13, 316),
+    Size = UDim2.new(1, -26, 0, 18),
+    BackgroundTransparency = 1,
+    Text = "Elapsed: 00:00:00",
+    TextColor3 = Theme.Muted,
+    Font = Enum.Font.Gotham,
+    TextSize = 9,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    ZIndex = 31
+}, SlotsPopup)
+
+local AutoStopButton = create("TextButton", {
+    Position = UDim2.fromOffset(12, 337),
+    Size = UDim2.fromOffset(112, 25),
+    BackgroundColor3 = Theme.Input,
+    BorderSizePixel = 0,
+    Text = "AUTO STOP: OFF",
+    TextColor3 = Theme.Muted,
+    Font = Enum.Font.GothamSemibold,
+    TextSize = 8,
+    ZIndex = 31
+}, SlotsPopup)
+round(AutoStopButton, 5)
+
+local AttemptLimitBox = create("TextBox", {
+    Position = UDim2.fromOffset(132, 337),
+    Size = UDim2.new(1, -144, 0, 25),
+    BackgroundColor3 = Theme.Input,
+    BorderSizePixel = 0,
+    Text = "0",
+    PlaceholderText = "Attempts (0 = unlimited)",
+    TextColor3 = Theme.Text,
+    PlaceholderColor3 = Theme.Subtle,
+    Font = Enum.Font.Gotham,
+    TextSize = 8,
+    ClearTextOnFocus = false,
+    ZIndex = 31
+}, SlotsPopup)
+round(AttemptLimitBox, 5)
+
+AutoStopButton.MouseButton1Click:Connect(function()
+    SlotFarmConfig.AutoStop = not SlotFarmConfig.AutoStop
+    AutoStopButton.Text = SlotFarmConfig.AutoStop and "AUTO STOP: ON" or "AUTO STOP: OFF"
+    AutoStopButton.BackgroundColor3 = SlotFarmConfig.AutoStop and Theme.AccentDark or Theme.Input
+    AutoStopButton.TextColor3 = SlotFarmConfig.AutoStop and Theme.Text or Theme.Muted
+    SlotFarmEnv.SlotConfig = SlotFarmConfig
+end)
+
+AttemptLimitBox.FocusLost:Connect(function()
+    local value = tonumber(AttemptLimitBox.Text)
+    if not value or value < 0 then
+        value = 0
+    end
+    value = math.floor(value)
+    SlotFarmConfig.AttemptLimit = value
+    AttemptLimitBox.Text = tostring(value)
+    SlotFarmEnv.SlotConfig = SlotFarmConfig
+end)
 
 local SlotToggleButtons = {}
 
@@ -1586,7 +2348,7 @@ for slot = 1, 8 do
 end
 
 local SlotFarmStatus = create("TextLabel", {
-    Position = UDim2.fromOffset(13, 294),
+    Position = UDim2.fromOffset(13, 359),
     Size = UDim2.new(1, -26, 0, 17),
     BackgroundTransparency = 1,
     Text = "Farm is disabled.",
@@ -1599,8 +2361,8 @@ local SlotFarmStatus = create("TextLabel", {
 }, SlotsPopup)
 
 local SlotFarmButton = create("TextButton", {
-    Position = UDim2.fromOffset(12, 316),
-    Size = UDim2.new(1, -24, 0, 29),
+    Position = UDim2.fromOffset(12, 385),
+    Size = UDim2.new(1, -24, 0, 30),
     BackgroundColor3 = Theme.AccentDark,
     BorderSizePixel = 0,
     Text = "START FARM",
@@ -1612,33 +2374,64 @@ local SlotFarmButton = create("TextButton", {
 
 round(SlotFarmButton, 6)
 
-local slotsOpen = false
-local codesOpen = false
-
 local function refreshSlotFarmButton()
     SlotFarmButton.Text = SlotFarmConfig.Enabled and "STOP FARM" or "START FARM"
     SlotFarmButton.BackgroundColor3 = SlotFarmConfig.Enabled and Theme.Red or Theme.AccentDark
 end
 
+task.spawn(function()
+    while Gui.Parent do
+        local stats = SlotFarmEnv.SlotFarmStats or {}
+        local attempts = tonumber(stats.Attempts) or tonumber(SlotFarmConfig.Attempts) or 0
+        local elapsed = 0
+
+        if SlotFarmConfig.StartedAt and SlotFarmConfig.StartedAt > 0 then
+            local endTime = SlotFarmConfig.EndedAt > 0
+                and SlotFarmConfig.EndedAt
+                or os.clock()
+            elapsed = math.max(0, endTime - SlotFarmConfig.StartedAt)
+        end
+
+        local hours = math.floor(elapsed / 3600)
+        local minutes = math.floor((elapsed % 3600) / 60)
+        local seconds = math.floor(elapsed % 60)
+
+        SlotAttemptLabel.Text = "Attempts: " .. tostring(attempts)
+        SlotElapsedLabel.Text = string.format(
+            "Elapsed: %02d:%02d:%02d",
+            hours,
+            minutes,
+            seconds
+        )
+
+        if SlotFarmConfig.Enabled == false and SlotFarmButton.Text == "STOP FARM" then
+            SlotFarmStatus.Text = "Attempt limit reached or farm stopped."
+            SlotFarmStatus.TextColor3 = Theme.Warning
+            refreshSlotFarmButton()
+        end
+
+        task.wait(0.5)
+    end
+end)
+
 local function toggleSlotsPopup()
     slotsOpen = not slotsOpen
     SlotsPopup.Visible = slotsOpen
-
-    if slotsOpen then
-        codesOpen = false
-        CodesPopup.Visible = false
-        CodesDockButton.BackgroundColor3 = Theme.Input
-    end
-
     SlotsDockButton.BackgroundColor3 = slotsOpen and Theme.AccentDark or Theme.Input
+    SlotFarmHudButton.BackgroundColor3 = slotsOpen and Theme.AccentDark or Theme.Input
+
+    if updatePositions then
+        updatePositions()
+    end
 end
 
 SlotsDockButton.MouseButton1Click:Connect(toggleSlotsPopup)
-SlotsClose.MouseButton1Click:Connect(toggleSlotsPopup)
+SlotFarmHudButton.MouseButton1Click:Connect(toggleSlotsPopup)
 
 SlotFarmButton.MouseButton1Click:Connect(function()
     if SlotFarmConfig.Enabled then
         SlotFarmConfig.Enabled = false
+        SlotFarmConfig.EndedAt = os.clock()
         SlotFarmEnv.SlotConfig = SlotFarmConfig
         SlotFarmStatus.Text = "Farm disabled."
         SlotFarmStatus.TextColor3 = Theme.Muted
@@ -1647,6 +2440,10 @@ SlotFarmButton.MouseButton1Click:Connect(function()
     end
 
     SlotFarmConfig.Enabled = true
+    SlotFarmConfig.Attempts = 0
+    SlotFarmConfig.StartedAt = os.clock()
+    SlotFarmConfig.EndedAt = 0
+    SlotFarmEnv.SlotFarmStats = {Attempts = 0}
     SlotFarmEnv.SlotConfig = SlotFarmConfig
     SlotFarmStatus.Text = "Starting farm..."
     SlotFarmStatus.TextColor3 = Theme.Muted
@@ -1683,8 +2480,6 @@ create("UIListLayout", {
     Padding = UDim.new(0, 5),
     SortOrder = Enum.SortOrder.LayoutOrder
 }, CodeResults)
-
---// CODE ROW HELPERS
 
 local function clearCodeRows()
     for _, child in ipairs(CodeResults:GetChildren()) do
@@ -1778,7 +2573,7 @@ local function normalizeCodeResponse(result)
     end
 
     if normalized:find("EXPIRED", 1, true) then
-        return "EXPIRED", raw, Theme.Red
+        return "EXPIRED", raw, Theme.Warning
 
     elseif normalized:find("USED", 1, true)
         or normalized:find("ALREADY REDEEMED", 1, true)
@@ -1805,28 +2600,19 @@ local function normalizeCodeResponse(result)
     return "SERVER RESPONSE", raw, Theme.Muted
 end
 
---// CODES OPEN/CLOSE
-
-
 local function toggleCodes()
     codesOpen = not codesOpen
     CodesPopup.Visible = codesOpen
+    CodesDockButton.BackgroundColor3 = codesOpen and Theme.AccentDark or Theme.Input
+    CodesHudButton.BackgroundColor3 = codesOpen and Theme.AccentDark or Theme.Input
 
-    if codesOpen then
-        slotsOpen = false
-        SlotsPopup.Visible = false
-        SlotsDockButton.BackgroundColor3 = Theme.Input
+    if updatePositions then
+        updatePositions()
     end
-
-    CodesDockButton.BackgroundColor3 = codesOpen
-        and Theme.AccentDark
-        or Theme.Input
 end
 
 CodesDockButton.MouseButton1Click:Connect(toggleCodes)
-CodesClose.MouseButton1Click:Connect(toggleCodes)
-
---// REDEEM ALL CODES
+CodesHudButton.MouseButton1Click:Connect(toggleCodes)
 
 local redeeming = false
 
@@ -1877,7 +2663,6 @@ RedeemButton.MouseButton1Click:Connect(function()
             color = Theme.Red
             failed += 1
 
-            warn("[Character Creator] Code request failed:", code, result)
         else
             status, detail, color = normalizeCodeResponse(result)
 
@@ -1894,12 +2679,6 @@ RedeemButton.MouseButton1Click:Connect(function()
                 failed += 1
             end
 
-            print(
-                "[Character Creator] Code:",
-                code,
-                status,
-                detail
-            )
         end
 
         addCodeResult(code, status, detail, color)
@@ -1930,17 +2709,19 @@ RedeemButton.MouseButton1Click:Connect(function()
         failed
     )
 
-    CodeResultSummary.TextColor3 = failed == 0
-        and Theme.Green
-        or Theme.Red
+    if successCount > 0 then
+        CodeResultSummary.TextColor3 = Theme.Green
+    elseif failed > 0 then
+        CodeResultSummary.TextColor3 = Theme.Red
+    else
+        CodeResultSummary.TextColor3 = Theme.Warning
+    end
 
     RedeemButton.Text = "Claim All Active Codes"
     RedeemButton.BackgroundColor3 = Theme.AccentDark
 
     redeeming = false
 end)
-
---// CHARACTER PAGE
 
 local CharacterPage = makeTab("CHARACTER")
 
@@ -1978,8 +2759,6 @@ dropdown(
     "Slot"
 )
 
---// BUILD PAGE
-
 local BuildPage = makeTab("BUILD")
 
 local BuildUnlocks = section(
@@ -2008,8 +2787,6 @@ toggle(
     "UnlockAwaken",
     "Unlocks Flow 2 and Weapon 2."
 )
-
---// FLOW OPTIONS
 
 local FlowOptions = section(
     BuildPage,
@@ -2104,8 +2881,6 @@ end
 
 updateTechniqueInfo()
 
---// TAB SELECTION
-
 local function selectTab(name)
     closeDropdown()
 
@@ -2126,13 +2901,9 @@ end
 
 selectTab("CHARACTER")
 
---// RELATIONSHIP PAYLOAD
-
 local function buildRelationships()
     local relationships = {}
 
-    -- When OFF, return an empty table; buildPayload omits relationship
-    -- fields entirely so existing saved relationships are not overwritten.
     if not Selected.AutoMaxAll then
         return relationships
     end
@@ -2148,8 +2919,6 @@ local function buildRelationships()
 
     return relationships
 end
-
---// BUILD SAVE PAYLOAD
 
 local function buildPayload()
     local now = os.time()
@@ -2213,8 +2982,6 @@ local function buildPayload()
     return payload
 end
 
---// SAVE
-
 local saving = false
 
 SaveButton.MouseButton1Click:Connect(function()
@@ -2264,107 +3031,58 @@ SaveButton.MouseButton1Click:Connect(function()
 
         Status.TextColor3 = Theme.Green
 
-        print("[Character Creator] Server response:", result)
-        print("[Character Creator] Relationships submitted:", relationshipCount)
-
-        if Selected.AutoMaxAll then
-            print("[Character Creator] Auto Max All was enabled.")
-        end
-
-        if payload.relationships then
-            for npcName, relationship in pairs(payload.relationships) do
-                print(
-                    "[Character Creator] Bond submitted:",
-                    npcName,
-                    relationship.value,
-                    relationship.type
-                )
-            end
-        end
     else
         Status.Text = "Save failed."
         Status.TextColor3 = Theme.Red
 
-        warn("[Character Creator] Save failed:", result)
     end
 
     SaveButton.Text = "Save Changes"
     saving = false
 end)
 
---// MINIMIZE
-
 local minimized = false
-local expandedSize = UDim2.fromOffset(620, 530)
-local updatePositions
+local expandedSize = Main.Size
 
-local function setMinimized(state)
-    minimized = state
+setMinimized = function(state)
+    minimized = state == true
 
-    if minimized then
-        expandedSize = Main.Size
+    Main.Visible = not minimized
+    CodesPopup.Visible = codesOpen
+    SlotsPopup.Visible = slotsOpen
+    MatchConfigPopup.Visible = matchConfigOpen
+    CharacterModifierPopup.Visible = characterModifierOpen
 
-        closeDropdown()
-        closeAttributePopup()
+    CodesHudButton.BackgroundColor3 = codesOpen and Theme.AccentDark or Theme.Input
+    CodesDockButton.BackgroundColor3 = codesOpen and Theme.AccentDark or Theme.Input
+    SlotFarmHudButton.BackgroundColor3 = slotsOpen and Theme.AccentDark or Theme.Input
+    SlotsDockButton.BackgroundColor3 = slotsOpen and Theme.AccentDark or Theme.Input
+    MatchConfigButton.BackgroundColor3 = matchConfigOpen and Theme.AccentDark or Theme.Input
 
-        Main.Size = UDim2.new(
-            expandedSize.X.Scale,
-            expandedSize.X.Offset,
-            0,
-            48
-        )
+    Footer.Visible = not minimized
+    TabBar.Visible = not minimized
+    Content.Visible = not minimized
 
-        Footer.Visible = false
-        TabBar.Visible = false
-        Content.Visible = false
+    LeftDock.Visible = not minimized
+    LeftPopup.Visible = not minimized and activeAttribute ~= nil
+    RightDock.Visible = false
+    BottomBar.Visible = true
+    CharacterCreatorDockButton.Visible = true
+    CodesHudButton.Visible = true
+    SlotFarmHudButton.Visible = true
+    MatchConfigButton.Visible = true
+    CharacterModifierHudButton.Visible = true
+    CharacterCreatorDockButton.BackgroundColor3 = not minimized
+        and Theme.AccentDark or Theme.Input
 
-        LeftDock.Visible = false
-        LeftPopup.Visible = false
-        RightDock.Visible = false
-        CodesPopup.Visible = false
-        SlotsPopup.Visible = false
-
-        CodesDockButton.BackgroundColor3 = Theme.Input
-        SlotsDockButton.BackgroundColor3 = Theme.Input
-
-        MinimizeButton.Text = "+"
-    else
+    if not minimized then
         Main.Size = expandedSize
-
-        Footer.Visible = true
-        TabBar.Visible = true
-        Content.Visible = true
-
-        LeftDock.Visible = true
-        RightDock.Visible = true
-
-        MinimizeButton.Text = "−"
-
-        if activeAttribute then
-            LeftPopup.Visible = true
-        end
-
-        CodesPopup.Visible = codesOpen
-        SlotsPopup.Visible = slotsOpen
-
-        CodesDockButton.BackgroundColor3 = codesOpen
-            and Theme.AccentDark
-            or Theme.Input
-        SlotsDockButton.BackgroundColor3 = slotsOpen
-            and Theme.AccentDark
-            or Theme.Input
     end
 
     if updatePositions then
         updatePositions()
     end
 end
-
-MinimizeButton.MouseButton1Click:Connect(function()
-    setMinimized(not minimized)
-end)
-
---// RESPONSIVE POSITIONING
 
 local cameraConnection
 local repositioning = false
@@ -2377,84 +3095,251 @@ updatePositions = function()
     repositioning = true
 
     local camera = workspace.CurrentCamera
-
     if not camera then
         repositioning = false
         return
     end
 
     local viewport = camera.ViewportSize
+    local edge = 10
+    local gap = 10
 
-    local width = math.min(620, viewport.X * 0.76)
-    local height = math.min(530, viewport.Y * 0.88)
+    local mainWidth = math.min(760, math.max(340, viewport.X - 24))
+    local mainHeight = math.min(560, math.max(380, viewport.Y - 96))
+    local mainLeft = (viewport.X - mainWidth) * 0.5
+    local mainTop = (viewport.Y - mainHeight) * 0.5
+    local mainRight = mainLeft + mainWidth
+    local mainBottom = mainTop + mainHeight
+    local centerX = viewport.X * 0.5
+    local centerY = viewport.Y * 0.5
 
-    if not minimized then
-        expandedSize = UDim2.fromOffset(width, height)
-        Main.Size = expandedSize
+    Main.AnchorPoint = Vector2.new(0.5, 0.5)
+    Main.Size = UDim2.fromOffset(mainWidth, mainHeight)
+    Main.Position = UDim2.fromScale(0.5, 0.5)
+    expandedSize = Main.Size
+
+    local showCodes = codesOpen
+    local showMatch = matchConfigOpen
+    local showSlots = slotsOpen
+    local showMain = Main.Visible
+
+    CodesPopup.Visible = showCodes
+    MatchConfigPopup.Visible = showMatch
+    SlotsPopup.Visible = showSlots
+    CharacterModifierPopup.Visible = characterModifierOpen
+    local modifierWidth = math.min(280, math.max(210, viewport.X - 20))
+    local modifierHeight = math.min(390, math.max(230, viewport.Y - 90))
+    CharacterModifierPopup.Size = UDim2.fromOffset(modifierWidth, modifierHeight)
+
+    local codesWidth = math.min(250, math.max(190, viewport.X - edge * 2))
+    local slotsWidth = math.min(260, math.max(190, viewport.X - edge * 2))
+    local matchWidth = math.min(260, math.max(190, viewport.X - edge * 2))
+
+    local codesHeight = math.min(
+        characterModifierOpen and 205 or 365,
+        math.max(150, viewport.Y - 2 * edge)
+    )
+    local slotsHeight = math.min(430, math.max(220, viewport.Y - 2 * edge))
+    local matchHeight = 154
+
+    CodesPopup.Size = UDim2.fromOffset(codesWidth, codesHeight)
+    CharacterModifierPopup.Size = UDim2.fromOffset(
+        math.min(modifierWidth, codesWidth),
+        math.min(modifierHeight, math.max(210, viewport.Y - codesHeight - edge * 3))
+    )
+    SlotsPopup.Size = UDim2.fromOffset(slotsWidth, slotsHeight)
+    MatchConfigPopup.Size = UDim2.fromOffset(matchWidth, matchHeight)
+
+    if showMain then
+        local innerLeft = mainLeft + 12
+        local dockY = mainTop + 54
+        local dockWidth = math.min(250, mainWidth - 24)
+        LeftDock.Size = UDim2.fromOffset(dockWidth, 36)
+        LeftDock.Position = UDim2.fromOffset(innerLeft, dockY)
+        HeightDockButton.Size = UDim2.fromOffset((dockWidth - 22) / 3, 28)
+        EgoDockButton.Size = HeightDockButton.Size
+        BondDockButton.Size = HeightDockButton.Size
+        HeightDockButton.Position = UDim2.fromOffset(5, 4)
+        EgoDockButton.Position = UDim2.fromOffset(8 + HeightDockButton.Size.X.Offset, 4)
+        BondDockButton.Position = UDim2.fromOffset(11 + HeightDockButton.Size.X.Offset * 2, 4)
+
+        local popupWidth = mainWidth - 24
+        LeftPopup.Size = UDim2.fromOffset(popupWidth, activeAttribute == "BONDS" and 92 or 112)
+        LeftPopup.Position = UDim2.fromOffset(innerLeft, dockY + 42)
+
+        if activeAttribute then
+            TabBar.Position = UDim2.fromOffset(0, 216)
+            Content.Position = UDim2.fromOffset(0, 256)
+            Content.Size = UDim2.new(1, 0, 1, -299)
+        else
+            TabBar.Position = UDim2.fromOffset(0, 94)
+            Content.Position = UDim2.fromOffset(0, 134)
+            Content.Size = UDim2.new(1, 0, 1, -177)
+        end
+
+        RightDock.Position = UDim2.fromOffset(
+            math.min(viewport.X - 42, mainRight + 8),
+            mainTop + (mainHeight - RightDock.AbsoluteSize.Y) * 0.5
+        )
+
+        if showCodes then
+            local codesX = mainLeft - gap - codesWidth * 0.5
+            codesX = math.max(edge + codesWidth * 0.5, codesX)
+            local codesY = math.clamp(
+                centerY,
+                edge + codesHeight * 0.5,
+                math.max(edge + codesHeight * 0.5, viewport.Y - edge - codesHeight * 0.5)
+            )
+            CodesPopup.Position = UDim2.fromOffset(codesX, codesY)
+        end
+
+        if characterModifierOpen then
+            local leftX = math.max(edge + modifierWidth * 0.5, mainLeft - gap - modifierWidth * 0.5)
+            if showCodes then
+                local combinedHeight = codesHeight + gap + CharacterModifierPopup.AbsoluteSize.Y
+                local top = math.clamp(centerY - combinedHeight * 0.5, edge, math.max(edge, viewport.Y - edge - combinedHeight))
+                CodesPopup.Position = UDim2.fromOffset(leftX, top + codesHeight * 0.5)
+                CharacterModifierPopup.Position = UDim2.fromOffset(
+                    leftX,
+                    top + codesHeight + gap + CharacterModifierPopup.AbsoluteSize.Y * 0.5
+                )
+            else
+                CharacterModifierPopup.Position = UDim2.fromOffset(
+                    leftX,
+                    math.clamp(centerY, edge + CharacterModifierPopup.AbsoluteSize.Y * 0.5,
+                        viewport.Y - edge - CharacterModifierPopup.AbsoluteSize.Y * 0.5)
+                )
+            end
+        end
+
+        local rightPanelX = mainRight + gap + math.max(
+            showMatch and matchWidth or 0,
+            showSlots and slotsWidth or 0
+        ) * 0.5
+
+        rightPanelX = math.min(
+            viewport.X - edge - math.max(
+                showMatch and matchWidth or 0,
+                showSlots and slotsWidth or 0
+            ) * 0.5,
+            rightPanelX
+        )
+
+        if showMatch and showSlots then
+            local totalHeight = matchHeight + gap + slotsHeight
+            local top = centerY - totalHeight * 0.5
+            if top < edge then
+                top = edge
+            end
+            if top + totalHeight > viewport.Y - edge then
+                top = math.max(edge, viewport.Y - edge - totalHeight)
+            end
+
+            MatchConfigPopup.Position = UDim2.fromOffset(
+                rightPanelX,
+                top + matchHeight * 0.5
+            )
+            SlotsPopup.Position = UDim2.fromOffset(
+                rightPanelX,
+                top + matchHeight + gap + slotsHeight * 0.5
+            )
+        elseif showMatch then
+            MatchConfigPopup.Position = UDim2.fromOffset(
+                rightPanelX,
+                math.clamp(centerY, edge + matchHeight * 0.5, viewport.Y - edge - matchHeight * 0.5)
+            )
+        elseif showSlots then
+            SlotsPopup.Position = UDim2.fromOffset(
+                rightPanelX,
+                math.clamp(centerY, edge + slotsHeight * 0.5, viewport.Y - edge - slotsHeight * 0.5)
+            )
+        end
+    else
+        LeftDock.Visible = false
+        LeftPopup.Visible = false
+
+        -- Keep popups in their assigned side docks even when they are the only
+        -- visible window; never recenter a lone popup in the middle of the screen.
+        local leftX = math.max(edge + codesWidth * 0.5, mainLeft - gap - codesWidth * 0.5)
+        local rightPanelWidth = math.max(showMatch and matchWidth or 0, showSlots and slotsWidth or 0)
+        local rightX = math.min(viewport.X - edge - rightPanelWidth * 0.5, mainRight + gap + rightPanelWidth * 0.5)
+
+        if showCodes and characterModifierOpen then
+            local pairHeight = codesHeight + gap + CharacterModifierPopup.AbsoluteSize.Y
+            local top = math.clamp(centerY - pairHeight * 0.5, edge, math.max(edge, viewport.Y - edge - pairHeight))
+            CodesPopup.Position = UDim2.fromOffset(leftX, top + codesHeight * 0.5)
+            CharacterModifierPopup.Position = UDim2.fromOffset(
+                leftX, top + codesHeight + gap + CharacterModifierPopup.AbsoluteSize.Y * 0.5
+            )
+        elseif showCodes then
+            CodesPopup.Position = UDim2.fromOffset(leftX, math.clamp(centerY, edge + codesHeight * 0.5, viewport.Y - edge - codesHeight * 0.5))
+        elseif characterModifierOpen then
+            CharacterModifierPopup.Position = UDim2.fromOffset(leftX, math.clamp(centerY, edge + CharacterModifierPopup.AbsoluteSize.Y * 0.5, viewport.Y - edge - CharacterModifierPopup.AbsoluteSize.Y * 0.5))
+        end
+
+        if showMatch and showSlots then
+            local totalHeight = matchHeight + gap + slotsHeight
+            local top = math.clamp(centerY - totalHeight * 0.5, edge, math.max(edge, viewport.Y - edge - totalHeight))
+            MatchConfigPopup.Position = UDim2.fromOffset(rightX, top + matchHeight * 0.5)
+            SlotsPopup.Position = UDim2.fromOffset(rightX, top + matchHeight + gap + slotsHeight * 0.5)
+        elseif showMatch then
+            MatchConfigPopup.Position = UDim2.fromOffset(rightX, math.clamp(centerY, edge + matchHeight * 0.5, viewport.Y - edge - matchHeight * 0.5))
+        elseif showSlots then
+            SlotsPopup.Position = UDim2.fromOffset(rightX, math.clamp(centerY, edge + slotsHeight * 0.5, viewport.Y - edge - slotsHeight * 0.5))
+        end
     end
 
-    local mainX = Main.AbsolutePosition.X
-    local mainY = Main.AbsolutePosition.Y
-    local mainHeight = Main.AbsoluteSize.Y
-
-    local dockY = mainY + math.min(100, mainHeight - 45)
-
-    LeftDock.Position = UDim2.fromOffset(
-        math.max(4, mainX - 46),
-        dockY
-    )
-
-    LeftPopup.Position = UDim2.fromOffset(
-        math.max(4, mainX - 198),
-        dockY
-    )
-
-    RightDock.Position = UDim2.fromOffset(
-        math.min(viewport.X - 42, mainX + Main.AbsoluteSize.X + 8),
-        dockY
-    )
-
-    CodesPopup.Position = UDim2.fromOffset(
-        math.min(
-            viewport.X - 258,
-            mainX + Main.AbsoluteSize.X + 52
-        ),
-        dockY
-    )
-
-    SlotsPopup.Position = UDim2.fromOffset(
-        math.min(
-            viewport.X - 238,
-            mainX + Main.AbsoluteSize.X + 52
-        ),
-        dockY
-    )
-
-    if viewport.X < 900 then
-        local popupHeight = activeAttribute == "BONDS" and 163 or 293
-
-        LeftPopup.Position = UDim2.fromOffset(
-            math.max(4, mainX),
-            math.max(4, mainY - popupHeight)
+    -- Keep Character Modifier directly below Claim Codes even when the main
+    -- Character Creator window is minimized; other popups reflow around it.
+    if not showMain and showCodes and characterModifierOpen then
+        local pairHeight = codesHeight + gap + CharacterModifierPopup.AbsoluteSize.Y
+        local pairTop = math.clamp(
+            centerY - pairHeight * 0.5,
+            edge,
+            math.max(edge, viewport.Y - edge - pairHeight)
         )
-
-        CodesPopup.Position = UDim2.fromOffset(
-            math.clamp(
-                mainX + Main.AbsoluteSize.X - 250,
-                4,
-                math.max(4, viewport.X - 254)
-            ),
-            math.max(4, mainY - 373)
+        local pairX = math.max(
+            edge + codesWidth * 0.5,
+            mainLeft - gap - codesWidth * 0.5
         )
-
-        SlotsPopup.Position = UDim2.fromOffset(
-            math.clamp(
-                mainX + Main.AbsoluteSize.X - 230,
-                4,
-                math.max(4, viewport.X - 234)
-            ),
-            math.max(4, mainY - 363)
+        CodesPopup.Position = UDim2.fromOffset(pairX, pairTop + codesHeight * 0.5)
+        CharacterModifierPopup.Position = UDim2.fromOffset(
+            pairX,
+            pairTop + codesHeight + gap + CharacterModifierPopup.AbsoluteSize.Y * 0.5
         )
+    end
+
+    local dockWidth = math.min(800, viewport.X - 12)
+    local dockGap = 5
+    local innerPadding = 5
+    local dockButtonWidth = math.floor(
+        (dockWidth - innerPadding * 2 - dockGap * 4) / 5
+    )
+
+    BottomBar.Size = UDim2.fromOffset(dockWidth, 44)
+    bottomBarShownPosition = UDim2.new(0.5, 0, 0, 10)
+    updateBottomBarPosition(true)
+
+    local dockButtons = {
+        CodesHudButton,
+        CharacterModifierHudButton,
+        CharacterCreatorDockButton,
+        MatchConfigButton,
+        SlotFarmHudButton
+    }
+
+    for index, button in ipairs(dockButtons) do
+        button.Position = UDim2.fromOffset(
+            innerPadding + (index - 1) * (dockButtonWidth + dockGap),
+            5
+        )
+        button.Size = UDim2.fromOffset(dockButtonWidth, 34)
+        button.TextSize = dockButtonWidth < 120 and 7 or 9
+    end
+
+    if showMain then
+        LeftDock.Visible = true
+        LeftPopup.Visible = activeAttribute ~= nil
     end
 
     repositioning = false
@@ -2483,19 +3368,25 @@ Main:GetPropertyChangedSignal("Position"):Connect(updatePositions)
 Main:GetPropertyChangedSignal("AbsoluteSize"):Connect(updatePositions)
 
 connectCamera()
-
---// CLOSE
-
-CloseButton.MouseButton1Click:Connect(function()
-    Gui:Destroy()
-end)
+setMinimized(true)
+updateHudFromMouse()
+CodesPopup.Visible = false
+SlotsPopup.Visible = false
+MatchConfigPopup.Visible = false
+CharacterModifierPopup.Visible = false
 
 Gui.Destroying:Connect(function()
     if cameraConnection then
         cameraConnection:Disconnect()
     end
 
+    InfStaminaState.running = false
     closeDropdown()
 end)
 
-print("[Character Creator] Loaded successfully.")
+local kitBrackets = PlayerGui
+    :WaitForChild("CharacterCreator")
+    :WaitForChild("Main")
+    :WaitForChild("KitBrackets")
+
+kitBrackets:Destroy()
