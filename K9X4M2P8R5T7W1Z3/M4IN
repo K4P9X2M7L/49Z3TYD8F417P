@@ -1769,10 +1769,10 @@ local ModifierApplyFootButton = modifierActionButton(
 local ModifierSkillSection = section(
     ModifierBody,
     "Skill Points",
-    "Adds exactly 110 points; does not replace your total"
+    "Adds exactly 50 points; does not replace your total"
 )
 local ModifierAddPointsButton = modifierActionButton(
-    ModifierSkillSection, "Add +110 Skill Points"
+    ModifierSkillSection, "Add +50 Skill Points"
 )
 
 local ModifierTechniqueSection = section(
@@ -1938,11 +1938,11 @@ ModifierApplyFootButton.MouseButton1Click:Connect(function()
 end)
 
 ModifierAddPointsButton.MouseButton1Click:Connect(function()
-    saveModifierChange("+110 skill points", function(slotData)
+    saveModifierChange("+50 skill points", function(slotData)
         local previous = tonumber(slotData.skillPoints) or 0
-        local updated = previous + 110
+        local updated = previous + 50
         slotData.skillPoints = updated
-        return string.format("Skill points: %d → %d (+110)", previous, updated)
+        return string.format("Skill points: %d → %d (+50)", previous, updated)
     end)
 end)
 ModifierTechniqueButton.MouseButton1Click:Connect(function()
